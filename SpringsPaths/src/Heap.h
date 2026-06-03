@@ -18,5 +18,5 @@ int hpExtractMin(Heap* h);
 void hpDestroyHeap(Heap* h);
 void printHeap(Heap *heap);
 void hpIncreaseVal(Heap* h, int element, int newValue);
-
+  
 #endif
