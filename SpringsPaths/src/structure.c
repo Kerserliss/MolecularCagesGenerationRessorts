@@ -242,6 +242,16 @@ void lstDelete(List_t *l) {
   free(l);
 }
 
+void lstPrint(List_t *l)
+{
+	for(int i = 0; i<size(l); i++)
+	{
+		printf("%d \n",elts(l,i));
+
+	}
+	printf("\n");
+}
+
 /**************************************/
 /* Point *******************************/
 /**************************************/
@@ -323,9 +333,9 @@ void gAddAlloc(Graph_t* g)
 int gGetIndiceFree(Graph_t* g)
 {
 	int i;
-	for (i = 0; i<gsize(g); i++)
+	for (i = 0; i<g->size; i++)
 	{
-		if(v_id(g->vertices[i]) == -1)
+		if(g->vertices[i]->id == -1)
 			return i;
 	}
 	gAddAlloc(g);
@@ -340,6 +350,7 @@ void gAddVertex(Graph_t* g, Vertex* v)
 	}
 	int indice = gGetIndiceFree(g);
 	g->vertices[indice] = v;
+	g->size += 1;
 }
 
 void gRemoveVertex(Graph_t* g,Vertex* v,int id)
@@ -349,6 +360,7 @@ void gRemoveVertex(Graph_t* g,Vertex* v,int id)
 		if(v_id(g->vertices[i]) == id)
 		{
 			g->vertices[i]->id = -1;
+			g->size -= 1;
 			break;
 		}
 	}
@@ -366,6 +378,24 @@ Vertex* gGetVertex(Graph_t* g,int id)
 			}
 		}
 	return v;
+}
+
+void gAddEdge(Graph_t* g, int id_v1, int id_v2)
+{
+	Vertex* v1 = gGetVertex(g, id_v1);
+	Vertex* v2 = gGetVertex(g, id_v2);
+	
+	vtxAddNeighboord(v1, id_v2);
+	vtxAddNeighboord(v2,id_v1);
+}
+
+void gRemoveEdge(Graph_t* g, int id_v1, int id_v2)
+{
+	Vertex* v1 = gGetVertex(g, id_v1);
+	Vertex* v2 = gGetVertex(g, id_v2);
+	
+	vtxRemoveNeighboord(v1, id_v2);
+	vtxRemoveNeighboord(v2,id_v1);
 }
 
 void gDestroy(Graph_t* g)

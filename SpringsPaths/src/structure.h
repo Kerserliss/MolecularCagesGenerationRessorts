@@ -155,6 +155,8 @@ List_t *lstAddList(List_t *, List_t *);
  */
 void lstDelete(List_t *);
 
+void lstPrint(List_t* );
+
 // VERTEX
 
 
@@ -193,22 +195,7 @@ typedef struct
 	int capacity;
 }Graph_t; // Est ce que ça sert ?
 
-typedef struct 
-{
-    int *array;
-	int size; // Number of element in the heap
-	int capacity; // Allocated size
-}Heap;
 
-Heap* hpInit(Heap* h);
-void swap(int* a, int* b);
-Heap* hpCreate();
-void hpAddAlloc(Heap* h);
-void hpAddElement(Heap* h, int elt);
-void hpHeapify(Heap* h, int i);
-float hpExtractMin(Heap* h);
-void hpDestroyHeap(Heap* h);
-void printHeap(Heap *heap);
 
 //Graph
 Graph_t* gInit(Graph_t* g);

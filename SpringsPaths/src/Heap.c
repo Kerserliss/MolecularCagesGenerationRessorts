@@ -1,4 +1,5 @@
 #include "structure.h"
+#include "Heap.h"
 #include <math.h>
 
 // HEAP  Implementation of a min heap
@@ -73,8 +74,19 @@ void hpHeapify(Heap* h, int i)
 
 }
 
-void hpIncreaseVal(Heap* h, int index, int newValue)
+void hpIncreaseVal(Heap* h, int element, int newValue)
 {
+
+	int index = 0;
+
+	for (index; index<h->size; index++)
+	{
+		if(h->array[index] == element)
+		{
+			break;
+		}
+	}
+
     if (index >= h->size || h->array[index] <= newValue)
     {
         printf("Invalid index or new value is not smaller\n");
@@ -89,7 +101,7 @@ void hpIncreaseVal(Heap* h, int index, int newValue)
     }
 }
 
-float hpExtractMin(Heap* h)
+int hpExtractMin(Heap* h)
 {
 	int root = h->array[0];
 	h->array[0] = h->array[h->size-1];
