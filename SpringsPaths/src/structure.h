@@ -15,6 +15,8 @@
 #define gsize(g) (g)->size
 #define v_id(v) (v)->id
 
+#define harray(h,i) (h)->array[i]
+
 // LIST
 
 typedef struct
@@ -157,6 +159,8 @@ void lstDelete(List_t *);
 
 void lstPrint(List_t* );
 
+void reverseList(List_t *l);
+
 // VERTEX
 
 
@@ -180,7 +184,7 @@ typedef struct
 	Point_t* coords; // Coords of the vertex
 } Vertex;
 
-Vertex* vtxInit(Vertex* v, int id, double x, double y, double z);
+void vtxInit(Vertex* v, int id, double x, double y, double z);
 Vertex* vtxCreate(int id, double x, double y, double z);
 void vtxAddNeighboord(Vertex* v, int id_v);
 void vtxRemoveNeighboord(Vertex* v, int id_v);
@@ -198,10 +202,23 @@ typedef struct
 
 
 //Graph
-Graph_t* gInit(Graph_t* g);
+void gInit(Graph_t* g);
 Graph_t* gCreate();
 void gAddVertex(Graph_t* g,Vertex* v);
 void gRemoveVertex(Graph_t* g, Vertex* v, int id);
 Vertex* gGetVertex(Graph_t*g,int id);
 void gDestroy(Graph_t* g);
+int gGetVertexIndice(Graph_t* g,int id);
+
+//Tuple
+
+typedef struct
+{
+	int nb1;
+	int nb2;
+}Tuple;
+
+void tInit(Tuple* t);
+Tuple* tCreate();
+void tDestroy(Tuple* t);
 #endif

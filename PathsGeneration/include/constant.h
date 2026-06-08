@@ -331,4 +331,4 @@
 #endif
 // Need to be smaller than DIST_GAP_CAGE, because we need to be able to access linkable atoms
 
-#endif
+#endif  

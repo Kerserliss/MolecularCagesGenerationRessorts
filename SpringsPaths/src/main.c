@@ -12,7 +12,7 @@
 
 Graph_t* Parse_file()
 {
-	FILE *file = fopen("graph.txt", "r");
+	FILE *file = fopen("graph2.txt", "r");
     if (file == NULL)
     {
         perror("Error opening file");
@@ -57,10 +57,74 @@ Graph_t* Parse_file()
     return g;
 }
 
+void printMat1(double** mat, int n, int m)
+{
+    for (int i = 0; i<n;i++)
+    {
+        for(int j= 0;j<m;j++)
+        {
+            printf(" %f ",mat[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+void printMatInt(int** mat, int n, int m)
+{
+    for (int i = 0; i<n;i++)
+    {
+        for(int j= 0;j<m;j++)
+        {
+            printf(" %d ",mat[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+void printMat2(double* mat, int n, int m)
+{
+    for (int i = 0; i<n;i++)
+    {
+        for(int j= 0;j<m;j++)
+        {
+            printf(" %f ",mat[i*n+j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
 void main()
 {
-	Graph_t* g = Parse_file();
-	int comp[] = {1,2,3,4,5,6};
-	List_t* seq1 = Dijkstra(g,1,2,comp);
-	lstPrint(seq1);
+	Graph_t* g=Parse_file();
+    // Compute Distance between each vertex of the graph.
+    int** matDistance = InitMatInt(g->size,g->size);
+    for(int i =0; i<g->size; i++)
+    {   
+        Vertex* v = g->vertices[i];
+        ResultDijkstra* rd = Dijkstra(g,v_id(v));
+        matDistance[i] = rd->mat;
+    }
+
+    // Compute Lij and Kij for each vertices
+    double** matK = malloc(g->size*sizeof(double*));
+    double** matL = malloc(g->size*sizeof(double*));
+    for (int i = 0; i<g->size; i++)
+    {
+        matK[i] = malloc(g->size*sizeof(double));
+        matK[i] = malloc(g->size*sizeof(double));
+        for(int j = 0; j<g->size; j++)
+        {
+            if(i==j)
+            {
+                continue;
+            }
+            matK[i][j] = K_RIGIDITY /(matDistance[i][j]*matDistance[i][j]);
+            matL[i][j] = matDistance[i][j] * LENGHT;
+        }
+    }
+    printMatInt(matDistance,g->size,g->size);
+    printMat1(matK,g->size,g->size);
+    printMat1(matL,g->size,g->size);
 }

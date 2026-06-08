@@ -2,7 +2,9 @@
 #include "Heap.h"
 #include <math.h>
 
-// HEAP  Implementation of a min heap
+// HEAP  Implementation of a min heap with tuple in it.
+// We defined that number 1 is the id of the vertex and number two is the distance.
+
 
 Heap* hpInit(Heap* h)
 {
@@ -28,26 +30,27 @@ Heap* hpCreate()
 
 void hpAddAlloc(Heap* h)
 {
-	h->array = realloc(h->array, (h->size + REALLOCSIZE)*sizeof(float));
+	h->array = realloc(h->array, (h->size + REALLOCSIZE)*sizeof(Tuple));
 	for(int i = 0; i<REALLOCSIZE; i++)
 	{	
-		h->array[h->size + i] = -1;
+		h->array[h->size + i] = tCreate();
 	}
 	h->capacity += REALLOCSIZE;
 }
 
 
-void hpAddElement(Heap* h,int elt)
+void hpAddElement(Heap* h, Tuple* tuple)
 {
 	if (h->size + 1 > h->capacity){
 		hpAddAlloc(h);
 	}
 	int i = h->size;
 	h->size++;
-	h->array[i] = elt;
-	while(i !=0 && h->array[(i-1)/2] > h->array[i])
+	h->array[i] = tuple;
+	while(i !=0 && harray(h,((i-1)/2))->nb2 > harray(h,i)->nb2)
 	{	
-		swap(&h->array[(i-1)/2],&h->array[i]);
+		swap(&harray(h,((i-1)/2))->nb1,&harray(h,i)->nb1); // We swap the id of the vertex
+		swap(&harray(h,((i-1)/2))->nb2,&harray(h,i)->nb2); // And the distance.
 		i = (i-1)/2;
 	}
 }
@@ -55,55 +58,57 @@ void hpAddElement(Heap* h,int elt)
 void hpHeapify(Heap* h, int i)
 {
 	int min = i; // Actual node
-	int left = 2*i +1; // Child left
-	int right = 2*i; // Child right
+	int left = 2*i +2; // Child left
+	int right = 2*i+1; // Child right
 
-	if (left < h->size && h->array[left] < h->array[min])
+	if (left < h->size && harray(h,left)->nb2 < harray(h,min)->nb2)
 	{
 		min = left; // If value at left is smaller, we change our min index
 	}
-	if (right < h->size && h->array[right] < h->array[min])
+	if (right < h->size && harray(h,right)->nb2 < harray(h,min)->nb2)
 	{
 		min = right;  // If value at right is smaller, we change our min index
 	}
 	if (min != i) // If our i is different as min, that mean we need to change.
 	{
-		swap(&h->array[i], &h->array[min]); // We swap value
+		swap(&harray(h,i)->nb1,&harray(h,min)->nb1); // We swap the id of the vertex
+		swap(&harray(h,i)->nb2,&harray(h,min)->nb2); // And the distance. // We swap value
 		hpHeapify(h,min); // And we call again to continue to change
 	}
 
 }
 
-void hpIncreaseVal(Heap* h, int element, int newValue)
+void hpIncreaseVal(Heap* h, int id, int newValue)
 {
 
 	int index = 0;
 
 	for (index; index<h->size; index++)
 	{
-		if(h->array[index] == element)
+		if(harray(h,index)->nb1 == id) // We check if the id we search is the id of the tuple.
 		{
 			break;
 		}
 	}
 
-    if (index >= h->size || h->array[index] <= newValue)
+    if (index >= h->size || harray(h,index)->nb2 <= newValue)
     {
         printf("Invalid index or new value is not smaller\n");
         return;
     }
 
-    h->array[index] = newValue;
-    while (index != 0 && h->array[(index - 1) / 2] < h->array[index])
+    harray(h,index)->nb2 = newValue;
+    while (index > 0 && harray(h,((index - 1) / 2))->nb2 > harray(h,index)->nb2)
     {
-        swap(&h->array[index], &h->array[(index - 1) / 2]);
+        swap(&harray(h,index)->nb1, &harray(h,((index - 1) / 2))->nb1);
+        swap(&harray(h,index)->nb2, &harray(h,((index - 1) / 2))->nb2);
         index = (index - 1) / 2;
     }
 }
 
-int hpExtractMin(Heap* h)
+Tuple* hpExtractMin(Heap* h)
 {
-	int root = h->array[0];
+	Tuple* root = h->array[0];
 	h->array[0] = h->array[h->size-1];
 	h->size--;
 
@@ -117,9 +122,9 @@ void hpDestroyHeap(Heap* h)
 	free(h);
 }
 
-void printHeap(Heap *heap)
+void printHeap(Heap *h)
 {
-    for (int i = 0; i < heap->size; ++i)
-        printf("%d \n", heap->array[i]);
+    for (int i = 0; i < h->size; ++i)
+        printf("Id : %d, dist : %d \n", harray(h,i)->nb1,harray(h,i)->nb2);
     printf("\n");
 }

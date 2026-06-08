@@ -246,10 +246,28 @@ void lstPrint(List_t *l)
 {
 	for(int i = 0; i<size(l); i++)
 	{
+		if(elts(l,i)== -1)
+		{
+			continue;
+		}
 		printf("%d \n",elts(l,i));
 
 	}
 	printf("\n");
+}
+
+void reverseList(List_t *l)
+{
+    int left  = 0;
+    int right = l->size - 1;
+    while (left < right)
+    {
+        int tmp        = l->elts[left];
+        l->elts[left]  = l->elts[right];
+        l->elts[right] = tmp;
+        left++;
+        right--;
+    }
 }
 
 /**************************************/
@@ -272,7 +290,7 @@ void ptDestroy(Point_t *p){
 /* Vertex *******************************/
 /**************************************/
 
-Vertex* vtxInit(Vertex* v, int id, double x, double y, double z)
+void vtxInit(Vertex* v, int id, double x, double y, double z)
 {
 	v->id= id;
 	v->neighborhood = lstCreate();
@@ -308,7 +326,7 @@ void vtxDestroy(Vertex* v)
 	free(v);
 }
 
-Graph_t* gInit(Graph_t* g)
+void gInit(Graph_t* g)
 {
 	g->vertices = NULL;
 	g->size = 0;
@@ -326,14 +344,14 @@ void gAddAlloc(Graph_t* g)
 {
 	g->vertices = realloc(g->vertices,(g->capacity + REALLOCSIZE)*sizeof(Vertex));
 	for (int i =0; i<REALLOCSIZE; i++)
-		g->vertices[i] = vtxCreate(-1,0,0,0);
+		g->vertices[g->size+i] = vtxCreate(-1,0,0,0);
 	g->capacity += REALLOCSIZE;
 }
 
 int gGetIndiceFree(Graph_t* g)
 {
 	int i;
-	for (i = 0; i<g->size; i++)
+	for (i = 0; i<g->capacity; i++)
 	{
 		if(g->vertices[i]->id == -1)
 			return i;
@@ -380,6 +398,20 @@ Vertex* gGetVertex(Graph_t* g,int id)
 	return v;
 }
 
+int gGetVertexIndice(Graph_t* g,int id)
+{
+	int index;
+	for(int i = 0; i<gsize(g);i++)
+	{
+		if(v_id(g->vertices[i]) == id)
+			{
+				index = i;
+				break;
+			}
+		}
+	return index;
+}
+
 void gAddEdge(Graph_t* g, int id_v1, int id_v2)
 {
 	Vertex* v1 = gGetVertex(g, id_v1);
@@ -402,4 +434,22 @@ void gDestroy(Graph_t* g)
 {
 	free(g->vertices);
 	free(g);
+}
+
+void tInit(Tuple* t)
+{
+	t->nb1 =-1;
+	t->nb2 =-1;
+}
+
+Tuple* tCreate()
+{
+	Tuple* t = malloc(sizeof(Tuple));
+	tInit(t);
+	return t;
+}
+
+void tDestroy(Tuple* t)
+{
+	free(t);
 }
