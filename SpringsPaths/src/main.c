@@ -1,130 +1,77 @@
+/**
+ * @file main.c
+ * @brief Main program for generating cages for a specific substrate.
+ *
+ * This program reads a substrate molecule from an input .moc2 file, reads a
+ * partial cage from an input .moc2 and generates whole cages.
+ */
+
 #include <getopt.h>
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <string.h>
+
+#include "constant.h"
+#include "distance.h"
+#include "interconnection.h"
+#include "main.h"
+#include "output.h"
 #include "structure.h"
-#include "Heap.h"
-#include "Kamada_Kawai.h"
+#include "substrat.h"
+#include "util.h"
+#include "Fruchterman_Reingold.h"
 
+// for stats
+#include "assembly.h"
 
-Graph_t* Parse_file()
+struct timespec start_time_ts;
+clock_t start_clock;
+
+/**
+ * Main function to run the cage generation process.
+ *
+ * @param argc Number of command-line arguments.
+ * @param argv Array of command-line arguments.
+ * @return Exit status of the program.
+ */
+int main() 
 {
-	FILE *file = fopen("graph2.txt", "r");
-    if (file == NULL)
-    {
-        perror("Error opening file");
-    }
-    Graph_t* g = gCreate();
-    int id;
-    int pos[3];
-    int neighboords[100];
-    char line[256];
-
-    while(fgets(line,sizeof(line),file) != NULL)
-    {
-    	line[strcspn(line, "\n")] = '\0';
-    	Vertex* v;
-
-    	char* f_id = strtok(line,":");
-    	char *f_pos = strtok(NULL, ":");
-        char *f_nghb = strtok(NULL, ":");
-
-        if (f_id == NULL || f_pos == NULL || f_nghb == NULL)
-            perror("Invalid format");
-
-        id = atoi(f_id);
-        char* token = strtok(f_pos, ",");
-        pos[0] = atoi(token);
-        token = strtok(NULL, ",");
-        pos[1] = atoi(token);
-        token = strtok(NULL, ",");
-        pos[2] = atoi(token);
-
-        token = strtok(f_nghb, ",");
-
-        v = vtxCreate(id,pos[0], pos[1], pos[2]);
-        while (token != NULL)
-        {
-            vtxAddNeighboord(v, atoi(token));
-            token = strtok(NULL, ",");
-        }
-        gAddVertex(g,v);
-    }
-    fclose(file);
-    return g;
+  Cage_t* s = cageImport("src/demos_test/Test1Sub1pathAlignX","0");
+  Add_Path(s);
+  cageWriteMol2_Spring("Result.mol2",s);
 }
 
-void printMat1(double** mat, int n, int m)
-{
-    for (int i = 0; i<n;i++)
-    {
-        for(int j= 0;j<m;j++)
-        {
-            printf(" %f ",mat[i][j]);
-        }
-        printf("\n");
-    }
-    printf("\n");
+/**
+ * Print the usage of the program.
+ */
+void usage() {
+        fprintf(stderr, USAGE_FMT, DEFLT_SIZEMAX, DEFLT_MAX_RESULTS, DEFLT_BANNED_EDGES,
+          DEFLT_ONE_CAGE_BY_INTERCONNECTION_TREE, DEFLT_PATH_BOUNDARY, DEFLT_DYNAMIC_PATH_LIMIT,
+          DEFLT_SORT_INTERCONNECTION_TREES);
+  exit(EXIT_FAILURE);
 }
 
-void printMatInt(int** mat, int n, int m)
-{
-    for (int i = 0; i<n;i++)
-    {
-        for(int j= 0;j<m;j++)
-        {
-            printf(" %d ",mat[i][j]);
-        }
-        printf("\n");
-    }
-    printf("\n");
-}
-void printMat2(double* mat, int n, int m)
-{
-    for (int i = 0; i<n;i++)
-    {
-        for(int j= 0;j<m;j++)
-        {
-            printf(" %f ",mat[i*n+j]);
-        }
-        printf("\n");
-    }
-    printf("\n");
-}
-
-void main()
-{
-	Graph_t* g=Parse_file();
-    // Compute Distance between each vertex of the graph.
-    int** matDistance = InitMatInt(g->size,g->size);
-    for(int i =0; i<g->size; i++)
-    {   
-        Vertex* v = g->vertices[i];
-        ResultDijkstra* rd = Dijkstra(g,v_id(v));
-        matDistance[i] = rd->mat;
-    }
-
-    // Compute Lij and Kij for each vertices
-    double** matK = malloc(g->size*sizeof(double*));
-    double** matL = malloc(g->size*sizeof(double*));
-    for (int i = 0; i<g->size; i++)
-    {
-        matK[i] = malloc(g->size*sizeof(double));
-        matK[i] = malloc(g->size*sizeof(double));
-        for(int j = 0; j<g->size; j++)
-        {
-            if(i==j)
-            {
-                continue;
-            }
-            matK[i][j] = K_RIGIDITY /(matDistance[i][j]*matDistance[i][j]);
-            matL[i][j] = matDistance[i][j] * LENGHT;
-        }
-    }
-    printMatInt(matDistance,g->size,g->size);
-    printMat1(matK,g->size,g->size);
-    printMat1(matL,g->size,g->size);
+/**
+ * @brief Handles termination signals (SIGTERM/SIGINT).
+ *
+ * This function is invoked when a timeout signal is received. It prints
+ * the values of global variables `cptResultCage_EGV` and `cptInterTree_EGV`
+ * (representing the number of results and interconnection trees, respectively)
+ * to `stderr`, and then gracefully terminates the program.
+ *
+ * @param signum The signal number that triggered the handler (e.g., SIGTERM).
+ *
+ * @note This function uses the `exit(1)` call to terminate the program.
+ *       Ensure that any required cleanup has been completed before invoking
+ * this handler.
+ */
+void timeoutHandler(int signum) {
+  fprintf(stderr, "Termination signal (%d) received!\n", signum);
+  flushStatsOnSignal();
+  fprintf(stderr, "Global Variable Values:\n");
+  fprintf(stderr, "  Cages Results: %d\n", cpt_result_cage_egv);
+  fprintf(stderr, "  Interconnection Trees: %d\n", cpt_inter_tree_egv);
+  exit(EXIT_FAILURE); // Exit the program
 }

@@ -10,7 +10,7 @@ typedef struct
 
 
 
-Heap* hpInit(Heap* h);
+void hpInit(Heap* h);
 void swap(int* a, int* b);
 Heap* hpCreate();
 void hpAddAlloc(Heap* h);

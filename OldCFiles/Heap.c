@@ -6,7 +6,7 @@
 // We defined that number 1 is the id of the vertex and number two is the distance.
 
 
-Heap* hpInit(Heap* h)
+void hpInit(Heap* h)
 {
 
 	h->array = NULL;
@@ -83,7 +83,7 @@ void hpIncreaseVal(Heap* h, int id, int newValue)
 
 	int index = 0;
 
-	for (index; index<h->size; index++)
+	for (;index<h->size; index++)
 	{
 		if(harray(h,index)->nb1 == id) // We check if the id we search is the id of the tuple.
 		{
