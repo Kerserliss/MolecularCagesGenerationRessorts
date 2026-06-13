@@ -18,6 +18,11 @@ double Attraction_Force(double x,double k)
 	return pow(x,2)/k;
 }
 
+double CoolingFunction(double temperature)
+{
+	return temperature * COOLING_RATE;
+}
+
 void Add_Path(Cage_t* s)
 {	
 	// Creation of a list to have all Linkable in a list.
@@ -73,7 +78,7 @@ void Add_Path(Cage_t* s)
 
 }
 
-void ComputeEdgeMat(Cage_t*s,int n, int m,int** mat[n][m])
+void ComputeEdgeMat(Cage_t*s,int n, int m,int** mat)
 {
 	for(int i = 0; i<n; i++)
 	{
@@ -99,32 +104,45 @@ void ComputeEdgeMat(Cage_t*s,int n, int m,int** mat[n][m])
 	}
 }
 
-void Fruchterman_Reinglod(Cage_t* s)
+void ptPrint(Point_t p)
 {
-	Point_t* Point_list_dips = malloc(s->size*sizeof(Point_t));
-	**int mat [s->size][s->size] = malloc(s->size*sizeof(int*));
+  printf("\tCoords x : %f\n", p.x);
+  printf("\tCoords y : %f\n", p.y);
+  printf("\tCoords z : %f\n", p.z);
+}
+
+void Fruchterman_Reingold(Cage_t* s)
+{
+	double temperature = TEMPERATURE;
+	Point_t* Vector_disp_list = malloc(s->size*sizeof(Point_t));
+	Point_t delta;
+	double distance;
+	int** mat = (int**)malloc(s->size*sizeof(int*));
 	for(int i = 0; i<s->size;i++)
 	{
-		mat[i] = malloc(s->size*sizeof(int));
+		mat[i] = (int*)malloc(s->size*sizeof(int));
 	}
 
 	ComputeEdgeMat(s,s->size,s->size,mat);
 	for (int i =0; i<ITERATIONS; i++)
 	{
+		printf("ITERATIONS : %d \n",i);
+		for (int j = 0; j<s->size; j++)
+			{
+				Vector_disp_list[j] = ptInit(0);
+			}
 		// Computing the repulsive force.
 		for(int j = 0; j<s->size; j++)
-		{
-			Point_list[j] = ptInit(0);
+		{	
 			if(flag(atom(s,j))==SPRING_PATH_F)
 			{			
 				for(int k = 0; k<s->size;k++)
 				{
 					if (k != j)
 					{
-						Point_t delta = vector(coords(atom(s,k)),coords(atom(s,j)));
-						double dist = dist(coords(atom(s,k)),coords(atom(s,j)));
-						disp = ptAdd(disp,ptMul(normalization(delta,1),Repulsion_force(fabs(dist),1.8)));
-						Point_list[j] = disp;
+						delta = vector(coords(atom(s,k)),coords(atom(s,j)));
+						distance = dist(coords(atom(s,k)),coords(atom(s,j)));
+						Vector_disp_list[j] = ptAdd(Vector_disp_list[j],ptMul(normalization(delta,1),Repulsion_force(fabs(distance),1.8)));
 					}
 				}	
 			}	
@@ -132,31 +150,82 @@ void Fruchterman_Reinglod(Cage_t* s)
 		// Computing the attractive force between neighbord.
 		for(int j = 0; j<s->size;j++)
 		{	
-			if(flag(atom(s,j))==SPRING_PATH_F)
-			{
-				AtomCage_t* atom_j = atom(s,j);
-				for (int k = 0; k<neighborhoodSize(atom_j))
-				{	
-					AtomCage_t* atom_neighbord = atom(s,elts(atom_j->neighborhood,k));
-					delta = vector(coords(atom_neighbord),coords(atom_j));
-					dist = dist(coords(atom_neighbord),coords(atom_j));
-					Point_list[j] = ptSub(Point_list[j],ptMul(normalization(delta,1),Attraction_Force(fabs(dist),1.5)));
-					if (flag(atom_neighbord) ==  SPRING_PATH_F)
+			AtomCage_t* atom_v = atom(s,j);
+			for (int k = j; k<s->size;k++)
+			{	
+				if(mat[j][k] != -1)
+				{
+					AtomCage_t* atom_u = atom(s,k);
+					if (flag(atom_v)==SPRING_PATH_F)
 					{
-						Point_list[elts(atom_j->neighborhood,k)] = ptAdd(Point_list[elts(atom_j->neighborhood,k)],ptMul(normalization(delta,1),Attraction_Force(fabs(dist),1.5)));
-						for (int l = 0; l<neighborhoodSize(atom_neighbord))
+						delta = vector(coords(atom_u),coords(atom_v));
+						distance = dist(coords(atom_u),coords(atom_v));
+						if (flag(atom_u)==SPRING_PATH_F)
 						{
-							if (elts(atom_neighbord->neighborhood,l) =! j && atom(s,elts(atom_neighbord->neighborhood,l)) == SPRING_PATH_F)
+							if (mat[j][k] == 1)
 							{
-								AtomCage_t* atom_neighbord_k = atom(s,elts(atom_neighbord->neighborhood,l));
-								delta = vector(coords(atom_neighbord_k),coords(atom_neighbord));
-								dist = dist(coords(atom_neighbord_k),coords(atom_neighbord));
-								Point_list[elts(atom_j->neighborhood,k)] =  
+								Vector_disp_list[j] = ptSub(Vector_disp_list[j],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.5)));
+								Vector_disp_list[k] = ptAdd(Vector_disp_list[k],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.5)));
+							}
+							else
+							{
+								Vector_disp_list[j] = ptSub(Vector_disp_list[j],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),2.44)));
+								Vector_disp_list[k] = ptAdd(Vector_disp_list[k],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),2.44)));	
+							}
+						}
+						else
+						{
+							if (mat[j][k] == 1)
+							{
+								Vector_disp_list[j] = ptSub(Vector_disp_list[j],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.5)));
+							}
+							else
+							{
+								Vector_disp_list[j] = ptSub(Vector_disp_list[j],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),2.44)));
 							}
 						}
 					}
-				}
+					else if(flag(atom_u) == SPRING_PATH_F)
+					{
+						delta = vector(coords(atom_u),coords(atom_v));
+						distance = dist(coords(atom_u),coords(atom_v));
+							if (mat[j][k] == 1)
+							{
+								Vector_disp_list[k] = ptAdd(Vector_disp_list[k],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.5)));
+							}
+							else
+							{
+								Vector_disp_list[k] = ptAdd(Vector_disp_list[k],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),2.44)));	
+							}
+					}
+				}		
 			}
 		}
+		printf("Before adding to the atom \n");
+		for (int j = 0; j<s->size; j++)
+			{
+				printf("Vector %d : \n",j);
+				ptPrint(Vector_disp_list[j]);
+				
+			}
+
+		// Adding the displacement to the point.
+		for (int j = 0; j<s->size; j++)
+		{
+			if(!ptEqual(ptInit(0),Vector_disp_list[j]))
+			{
+				AtomCage_t* Current_atom = atom(s,j);
+				Point_t calcul = ptMul(normalization(Vector_disp_list[j],1),fmin(temperature,dist(ptInit(0),Vector_disp_list[j])));
+				coords(Current_atom) = ptAdd(coords(Current_atom),calcul);
+			}
+		}
+		for (int j = 0; j<s->size; j++)
+			{
+				printf("Atom %d : \n",j);
+				ptPrint(coords(atom(s,j)));
+				
+			}
+		// Cooling the temperature.
+		temperature = CoolingFunction(temperature);
 	}	
 }

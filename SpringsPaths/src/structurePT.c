@@ -1,4 +1,4 @@
-f#include "structure.h"
+#include "structure.h"
 
 /**
  * @file structurePT.c
@@ -161,3 +161,4 @@ int ptEqual(Point_t A, Point_t B) { // 1 if equal, if not 0
     return 1;
   return 0;
 }
+

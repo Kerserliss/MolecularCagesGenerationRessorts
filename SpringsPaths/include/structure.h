@@ -190,15 +190,6 @@ typedef struct {
   Elem_s *first; /**< Pointer to the first element in the list. */
 } List_s;
 
-/**
- * @struct List_e
- * @brief Represents a list of edge.
- */
-typedef struct{
-  Edge* edges;
-  unsigned size_elt;
-  unsigned allocated_size;
-}
 
 /**************************************/
 /* CAGE ******************************/
@@ -623,19 +614,7 @@ void lstsRemoveElement(List_s *list, Point_t p);
  */
 void lstsPrint(List_s *list);
 
-List_e* lsteCreate();
 
-void lsteAddElement(List_e* list, Edge e);
-
-void lsteRemoveElement(List_e* list, Edge e);
-
-Edge lsteFindEdgeID(List_e* list,Edge e);
-
-void lstePrint(List_e* list);
-
-void lsteDestroy(List_e* list);
-
-void lsteAddAlloc(List_e* list);
 
 
 
@@ -945,47 +924,5 @@ void printMinHeap(MinHeap_t *heap);
  */
 void freeMinHeap(MinHeap_t *heap);
 
-// EDGE
 
-typedef struct {
-  int id;
-  int v; // First vertex in the edge.
-  int u; // Second vertex in the edge.
-} Edge;
-
-/**
- * @brief Initialze the Edge
- *
- * This function create the edge and return it.
- *
- * @param int First vertex, int Seconf vertex.
- */
-Edge edCreate(int id,int first_vertex, int second_vertex);
-
-/**
- * @brief Create an array of edge from an Moc. 
- *
- * This function take an molecular cage and compute all the edges in it. Used in the Fructerman_Reingold algorithm.
- *
- * @param Cage_t The moleculare Cage.
- */
-Edge* edComputeEdgeMoc(Cage_t* s);
-
-/**
- * @brief Find the neighbord of a vertex. 
- *
- * This function take a vertex, an array of edge and find all edge where this vertex is implied. 
- *
- * @param Cage_t The moleculare Cage.
- */
-Edge* edFind2_neighborh(Edge* e, int vertex_common);
-
-/**
- * @brief Free the array of Edge
- *
- * This function free the edge and return it.
- *
- * @param int First vertex, int Seconf vertex.
- */
-void edDestroy(Edge* e)
 #endif
