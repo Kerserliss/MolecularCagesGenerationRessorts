@@ -242,4 +242,6 @@ char *getBasename(const char *in);
 #define LIKELY(x)   __builtin_expect(!!(x), 1) /**< Likely branch prediction hint. */
 #define UNLIKELY(x) __builtin_expect(!!(x), 0) /**< Unlikely branch prediction hint. */
 
+double Al_kashi_therorem(double a, double b,double angle);
+
 #endif

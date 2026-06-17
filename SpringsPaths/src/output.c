@@ -725,6 +725,7 @@ FILE *filestream = NULL;
   ret = fprintf(filestream, "SMALL\nGASTEIGER\n\n");
 
   // Atom Writting
+  printf("Start Atom Writting \n");
   ret = fprintf(filestream, "@<TRIPOS>ATOM\n");
   for (i = 0, j = 1; i < size(s); i++) {
     if (flag(atom(s, i)) != NOT_DEF_F) {
@@ -791,6 +792,7 @@ FILE *filestream = NULL;
   }
 
   // Ecriture des liens
+  printf("Start Edge Writting \n");
   ret = fprintf(filestream, "\n@<TRIPOS>BOND\n");
   for (i = 0, l = 1; i < size(s); i++) {
     for (j = 0; j < neighborhoodSize(atom(s, i)); j++) {

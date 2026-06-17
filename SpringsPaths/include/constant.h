@@ -338,10 +338,10 @@
 
 #define K_FRUCH_REIN 1.5
 
-#define ITERATIONS 10
+#define ITERATIONS 300
 
-#define TEMPERATURE 0.99
+#define TEMPERATURE 100
 
-#define COOLING_RATE 100
+#define COOLING_RATE 0.95
 
-#endif  
+#endif

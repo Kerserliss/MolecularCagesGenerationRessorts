@@ -387,3 +387,8 @@ char *getBasename(const char *in) {
 
   return result;
 }
+
+double Al_kashi_therorem(double a, double b,double angle)
+{
+    return sqrt(pow(a,2)+pow(b,2)-2*a*b*cos(angle));
+}
