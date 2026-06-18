@@ -2,6 +2,7 @@
 #include "structure.h"
 #include "util.h"
 
+#include <stdio.h>
 #include <math.h>
 
 /**
@@ -461,6 +462,7 @@ Cage_t *cageImport(char *inputname, char *mocNum) {
   // Calculate the length of the fixed parts and the inputname
   const char *suffix = ".mol2";
   const char *access_moc = "_moc";
+  printf("In Import \n");
   int suffix_len = strlen(suffix);
   int access_moc_len = strlen(access_moc);
   int inputname_len = strlen(inputname);
@@ -504,7 +506,6 @@ Cage_t *cageImport(char *inputname, char *mocNum) {
 
   // Define variable use for reading
   char line[256];
-
   // Read to number of Atom (jump 2 first lines and read on third)
   if (fgets(line, sizeof(line), filestream) == NULL) {
     printf("Error reading file");
@@ -547,7 +548,7 @@ Cage_t *cageImport(char *inputname, char *mocNum) {
   import_cage->yMinWOGap = INFINITY;
   import_cage->zMaxWOGap = -INFINITY;
   import_cage->zMinWOGap = INFINITY;
-
+  printf("Size aotm cage : %d\n",size(import_cage));
   for (int i = 0; i < size(import_cage); i++) {
     ret = fscanf(filestream, "%d %s", &index, atom_name);
     if (strcmp(atom_name, "S") == 0) {
@@ -558,6 +559,9 @@ Cage_t *cageImport(char *inputname, char *mocNum) {
       flag((atom(import_cage, index - 1))) = LINKABLE_F;
     } else if (strcmp(atom_name, "C") == 0) {
       flag((atom(import_cage, index - 1))) = CARBON_F;
+    } else if (strcmp(atom_name, "O") == 0) {
+        printf("Spring Path atom \n");
+      flag((atom(import_cage, index - 1))) = SPRING_PATH_F;
     } else {
       printf("unknown atom type: %s\n", atom_name);
       exit(EXIT_FAILURE);

@@ -13,6 +13,54 @@ double Repulsion_force(double x,double k)
 	return pow(k,2)/x;
 }
 
+double RSMD_Cage_dist(int n, int m, int** mat, Cage_t* s)
+{
+    double RMSD = 0;
+    double distance = 0;
+    for (int i = 0; i<n; i++)
+    {
+        AtomCage_t* atom_i = atom(s,i);
+        for (int j = i; j<m ;j++)
+        {
+            if (mat[i][j] ==1)
+            {
+                AtomCage_t* atom_j = atom(s,j);
+                distance = dist(coords(atom_i),coords(atom_j))-1.5;
+                RMSD += pow(fabs(distance),2);
+            }
+        }
+    }
+    RMSD = sqrt(RMSD/s->size);
+    return RMSD;
+}
+
+double RSMD_Cage_angle(int n, int m, int** mat, Cage_t* s)
+{
+    double RMSD = 0;
+    double angle_c = 0;
+    for (int i = 0; i<n; i++)
+    {
+        AtomCage_t* atom_b = atom(s,i);
+        for (int j = i; j<m ;j++)
+        {
+            if (mat[i][j] ==2)
+            {
+                AtomCage_t* atom_c = atom(s,j);
+                for (int k = 0; k<cageNbNeighborhood(atom_c);k++)
+                {
+                    if (lstCheck(atom_b->neighborhood,elts(atom_c->neighborhood,k))) // Find the atom in commun.
+                    {
+                        AtomCage_t* atom_a = atom(s,elts(atom_c->neighborhood,k));
+                        angle_c = angle(coords(atom_a),coords(atom_b), coords(atom_c));
+                        RMSD += pow(fabs(angle_c - 109.5),2);
+                    }
+                }
+            }
+        }
+    }
+    RMSD = sqrt(RMSD/s->size);
+    return RMSD;
+}
 
 double Attraction_Force(double x,double k)
 {
@@ -126,32 +174,6 @@ double ptSum(Point_t p)
 
 void Fruchterman_Reingold(Cage_t* s)
 {
-    // FILE* fptr1;
-    // FILE* fptr2;
-    // FILE* fptr3;
-    // char name1[64];
-    // char name2[64];
-    // char name3[64];
-    // sprintf(name1,"Temp_%d_It_%d_CR_%f_XIt_YTemp.csv", TEMPERATURE,ITERATIONS,COOLING_RATE);
-    // sprintf(name2,"Temp_%d_It_%d_CR_%f_XTemp_YDisp_max.csv", TEMPERATURE,ITERATIONS,COOLING_RATE);
-    // sprintf(name3,"Temp_%d_It_%d_CR_%f_XIt_YDisp_max.csv", TEMPERATURE,ITERATIONS,COOLING_RATE);
-    // fptr1 = fopen(name1,"w");
-    // fptr2 = fopen(name2,"w");
-    // fptr3 = fopen(name3,"w");
-    // if(fptr1 ==  NULL)
-    //     printf("The file1 is not opened. \n");
-    // if(fptr2 ==  NULL)
-    //     printf("The file2 is not opened. \n");
-    // if(fptr3 ==  NULL)
-    //     printf("The file3 is not opened. \n");
-    // fprintf(fptr1,"Iterations,Temperature\n");
-    // fprintf(fptr2,"Temperature,Disp_max\n");
-    // fprintf(fptr3,"Iteration,Disp_max\n");
-    // FILE* fptr4;
-    // char name4[64];
-    // sprintf(name4,"Temp_%d_It_%d_CR_%f_XIt_YDisp_moy.csv", TEMPERATURE,ITERATIONS,COOLING_RATE);
-    // fptr4 = fopen(name4,"w");
-    // fprintf(fptr4,"Iteration,Disp_moy\n");
 	double temperature = TEMPERATURE;
 	Point_t* Vector_disp_list = malloc(s->size*sizeof(Point_t));
 	Point_t delta;
@@ -162,10 +184,12 @@ void Fruchterman_Reingold(Cage_t* s)
 	{
 		mat[i] = (int*)malloc(s->size*sizeof(int));
 	}
-
+	int i = 0;
 	ComputeEdgeMat(s,s->size,s->size,mat);
-	for (int i =0; i<ITERATIONS; i++)
+	while(i<ITERATIONS && temperature >0)
 	{
+	    if(i%10000 == 0)
+			printf("Iterations : %d \n",i);
 		for (int j = 0; j<s->size; j++)
 			{
 				Vector_disp_list[j] = ptInit(0);
@@ -242,33 +266,20 @@ void Fruchterman_Reingold(Cage_t* s)
 		}
 		// Point_t max = ptInit(0);
 		Point_t pt0 = ptInit(0);
-		// Adding the displacement to the point.
-		Point_t Sum = ptInit(0);
 		for (int j = 0; j<s->size; j++)
 		{
-			if(!ptEqual(ptInit(0),Vector_disp_list[j]))
+			if(!ptEqual(pt0,Vector_disp_list[j]))
 			{
 				AtomCage_t* Current_atom = atom(s,j);
 				Point_t calcul = ptMul(normalization(Vector_disp_list[j],1),fmin(temperature,dist(ptInit(0),Vector_disp_list[j])));
 				coords(Current_atom) = ptAdd(coords(Current_atom),calcul);
-				// if (dist(pt0,Vector_disp_list[j])>dist(pt0,max))
-				// {
-				//     max = Vector_disp_list[j];
-				// }
-				Sum = ptAdd(Sum,Vector_disp_list[j]);
 			}
 		}
-		// fprintf(fptr1, "%d,%f\n",i,temperature);
-		// fprintf(fptr2, "%f,%f\n",temperature,dist(pt0,max));
-		// fprintf(fptr3, "%d,%f\n",i,dist(pt0,max));
-
-		// fprintf(fptr4, "%d,%f\n",i,dist(pt0,Moy));
-		// Cooling the temperature.
 		temperature = CoolingFunction(temperature);
+		i += 1;
 
 	}
-	// fclose(fptr1);
-	// fclose(fptr2);
-	// fclose(fptr3);
-	// fclose(fptr4);
+	printf("I : %d , Temp : %f \n",i,temperature);
+	printf("RMSD dist : %f \n",RSMD_Cage_dist(s->size, s->size, mat, s));
+	printf("RMSD angle : %f \n",RSMD_Cage_angle(s->size, s->size, mat, s));
 }
