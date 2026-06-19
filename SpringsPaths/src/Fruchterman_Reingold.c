@@ -3,6 +3,7 @@
 #include "constant.h"
 #include "distance.h"
 #include "util.h"
+#include "interconnection.h"
 
 #include <stdio.h>
 #include <math.h>
@@ -77,57 +78,67 @@ double CoolingFunction(double temperature)
 	return temperature * COOLING_RATE;
 }
 
+
 void Add_Path(Cage_t* s)
 {
 	// Creation of a list to have all Linkable in a list.
 	List_t* flag_list = lstCreate();
+	List_t* already_linked = lstCreate();
 	for (int i = 0; i<s->size;i++)
 	{
-		if(flag(atom(s,i))==LINKABLE_F && cageNbNeighborhood(atom(s,i))<2) // If our linkable have already too much neighbord we don't consider it.
+	    printf("Id Atom %d flag : %d\n",i,flag(atom(s,i)));
+		if(flag(atom(s,i))==LINKABLE_F) // If our linkable have already too much neighbord we don't consider it.
 		{
 			lstAddElement(flag_list,i);
 		}
 	}
-	for (int i = 0; i< lstNbElements(flag_list)&& cageNbNeighborhood(atom(s,elts(flag_list,i)))<2;i++) // Same check here.
+	// Search connexe componants in the graph.
+
+	for (int i = 0; i< lstNbElements(flag_list);i++) // Same check here.
 	{
-		AtomCage_t* atom_i = atom(s,elts(flag_list,i));
+	    if(!(lstCheck(already_linked,i)))
+	    {
+    		AtomCage_t* atom_i = atom(s,elts(flag_list,i));
 
-		double min[2] = {-1,DBL_MAX};
+    		double min[2] = {-1,DBL_MAX};
 
-		for (int j =0; j<lstNbElements(flag_list)&& cageNbNeighborhood(atom(s,elts(flag_list,j)))<2;j++)
-		{
-			if (i!=j)
-			{
-				AtomCage_t* atom_j = atom(s,elts(flag_list,j));
-				double distance_euclidian = dist(coords(atom_i),coords(atom_j));
+    		for (int j =0; j<lstNbElements(flag_list);j++)
+    		{
+    			if (i!=j && !(lstCheck(already_linked,j)))
+    			{
+    				AtomCage_t* atom_j = atom(s,elts(flag_list,j));
+    				double distance_euclidian = dist(coords(atom_i),coords(atom_j));
 
-					if (min[1]>distance_euclidian)
-					{
-						min[0] = (double)elts(flag_list,j);
-						min[1] = distance_euclidian;
-					}
-			}
-		}
-		if (min[0] != -1)
-		{
-			AtomCage_t* atom_select = atom(s,(int)min[0]);
-			Point_t vector_dir = vector(coords(atom_i),coords(atom_select));
+    					if (min[1]>distance_euclidian)
+    					{
+    						min[0] = (double)elts(flag_list,j);
+    						min[1] = distance_euclidian;
+    					}
+    			}
+    		}
+    		if (min[0] != -1)
+    		{
+    			AtomCage_t* atom_select = atom(s,(int)min[0]);
+    			Point_t vector_dir = vector(coords(atom_i),coords(atom_select));
 
-			double dist_atom = Al_kashi_therorem(1.5,1.5,1.911136)/2;
-			Point_t norm = normalization(vector_dir,dist_atom);
+    			double dist_atom = Al_kashi_therorem(1.5,1.5,1.911136)/2;
+    			Point_t norm = normalization(vector_dir,dist_atom);
 
-			int nb_atoms_to_place = (int)round(min[1]/dist_atom)-1;
+    			int nb_atoms_to_place = (int)round(min[1]/dist_atom)-1;
 
-			int id_pred = elts(flag_list,i);
-			for (int k =0; k<nb_atoms_to_place;k++)
-				{
-					Point_t coords = ptAdd(coords(atom(s,id_pred)),norm);
-					int id_new_atom = cageAddAtom(s,coords);
-					flag(atom(s,id_new_atom)) = SPRING_PATH_F;
-					cageAddEdge(s,id_new_atom,id_pred);
-				id_pred = id_new_atom;
-				}
-			cageAddEdge(s,id_pred,(int)(min[0]));
+    			int id_pred = elts(flag_list,i);
+    			for (int k =0; k<nb_atoms_to_place;k++)
+    				{
+    					Point_t coords = ptAdd(coords(atom(s,id_pred)),norm);
+    					int id_new_atom = cageAddAtom(s,coords);
+    					flag(atom(s,id_new_atom)) = SPRING_PATH_F;
+    					cageAddEdge(s,id_new_atom,id_pred);
+    				id_pred = id_new_atom;
+    				}
+    			cageAddEdge(s,id_pred,(int)(min[0]));
+                lstAddElement(already_linked, i);
+                lstAddElement(already_linked, (int)min[0]);
+    		}
 		}
 	}
 
@@ -184,6 +195,8 @@ void Fruchterman_Reingold(Cage_t* s)
 	{
 		mat[i] = (int*)malloc(s->size*sizeof(int));
 	}
+
+
 	int i = 0;
 	ComputeEdgeMat(s,s->size,s->size,mat);
 	while(i<ITERATIONS && temperature >0)
@@ -201,7 +214,7 @@ void Fruchterman_Reingold(Cage_t* s)
 			{
 				for(int k = 0; k<s->size;k++)
 				{
-					if (k != j)
+					if (k != j&&dist(coords(atom(s,k)),coords(atom(s,j)))<3)
 					{
 						delta = vector(coords(atom(s,k)),coords(atom(s,j)));
 						distance = dist(coords(atom(s,k)),coords(atom(s,j)));
@@ -232,8 +245,8 @@ void Fruchterman_Reingold(Cage_t* s)
 							}
 							else
 							{
-								Vector_disp_list[j] = ptSub(Vector_disp_list[j],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.22)));
-								Vector_disp_list[k] = ptAdd(Vector_disp_list[k],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.22)));
+								Vector_disp_list[j] = ptSub(Vector_disp_list[j],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.2)));
+								Vector_disp_list[k] = ptAdd(Vector_disp_list[k],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.2)));
 							}
 						}
 						else
@@ -244,7 +257,7 @@ void Fruchterman_Reingold(Cage_t* s)
 							}
 							else
 							{
-								Vector_disp_list[j] = ptSub(Vector_disp_list[j],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.22)));
+								Vector_disp_list[j] = ptSub(Vector_disp_list[j],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.2)));
 							}
 						}
 					}

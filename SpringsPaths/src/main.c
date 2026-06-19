@@ -38,11 +38,11 @@ clock_t start_clock;
  */
 int main()
 {
-  Cage_t* s = cageImport("src/demos_test/ResultSpring2","0");
+  Cage_t* s = cageImport("src/demos_test/TestNoSub1path","0");
   Add_Path(s);
   Fruchterman_Reingold(s);
-  
-  cageWriteMol2_Spring("ResultSpring2_moc1.mol2",s);
+
+  cageWriteMol2_Spring("ResultSpring2_moc5.mol2",s);
 }
 
 /**
