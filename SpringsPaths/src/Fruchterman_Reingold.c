@@ -68,6 +68,11 @@ double Attraction_Force(double x,double k)
 	return pow(x,2)/k;
 }
 
+double Attraction_Force_quatradic(double x, double k)
+{
+	return k*log(x);
+}
+
 double LinearCoolingFunction(double temperature)
 {
     return temperature - COOLING_RATE;
@@ -183,8 +188,14 @@ double ptSum(Point_t p)
     return sum;
 }
 
-void Fruchterman_Reingold(Cage_t* s)
+void Fruchterman_Reingold(Cage_t* s, double k_attraction1,double k_attraction2, double k_repulsion,char* name1)
 {
+	FILE* fp1 = fopen(name1,"a");
+	
+
+	double RSMD_dist;
+	double RSMD_angle;
+
 	double temperature = TEMPERATURE;
 	Point_t* Vector_disp_list = malloc(s->size*sizeof(Point_t));
 	Point_t delta;
@@ -218,7 +229,7 @@ void Fruchterman_Reingold(Cage_t* s)
 					{
 						delta = vector(coords(atom(s,k)),coords(atom(s,j)));
 						distance = dist(coords(atom(s,k)),coords(atom(s,j)));
-						Vector_disp_list[j] = ptAdd(Vector_disp_list[j],ptMul(normalization(delta,1),Repulsion_force(fabs(distance),1.8)));
+						Vector_disp_list[j] = ptAdd(Vector_disp_list[j],ptMul(normalization(delta,1),Repulsion_force(fabs(distance),k_repulsion)));
 					}
 				}
 			}
@@ -240,24 +251,24 @@ void Fruchterman_Reingold(Cage_t* s)
 						{
 							if (mat[j][k] == 1)
 							{
-								Vector_disp_list[j] = ptSub(Vector_disp_list[j],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.3)));
-								Vector_disp_list[k] = ptAdd(Vector_disp_list[k],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.3)));
+								Vector_disp_list[j] = ptSub(Vector_disp_list[j],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),k_attraction1)));
+								Vector_disp_list[k] = ptAdd(Vector_disp_list[k],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),k_attraction1)));
 							}
 							else
 							{
-								Vector_disp_list[j] = ptSub(Vector_disp_list[j],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.2)));
-								Vector_disp_list[k] = ptAdd(Vector_disp_list[k],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.2)));
+								Vector_disp_list[j] = ptSub(Vector_disp_list[j],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),k_attraction2)));
+								Vector_disp_list[k] = ptAdd(Vector_disp_list[k],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),k_attraction2)));
 							}
 						}
 						else
 						{
 							if (mat[j][k] == 1)
 							{
-								Vector_disp_list[j] = ptSub(Vector_disp_list[j],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.3)));
+								Vector_disp_list[j] = ptSub(Vector_disp_list[j],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),k_attraction1)));
 							}
 							else
 							{
-								Vector_disp_list[j] = ptSub(Vector_disp_list[j],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.2)));
+								Vector_disp_list[j] = ptSub(Vector_disp_list[j],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),k_attraction2)));
 							}
 						}
 					}
@@ -267,11 +278,11 @@ void Fruchterman_Reingold(Cage_t* s)
 						distance = dist(coords(atom_u),coords(atom_v));
 							if (mat[j][k] == 1)
 							{
-								Vector_disp_list[k] = ptAdd(Vector_disp_list[k],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.3)));
+								Vector_disp_list[k] = ptAdd(Vector_disp_list[k],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),k_attraction1)));
 							}
 							else
 							{
-								Vector_disp_list[k] = ptAdd(Vector_disp_list[k],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),1.22)));
+								Vector_disp_list[k] = ptAdd(Vector_disp_list[k],ptMul(normalization(delta,1),Attraction_Force(fabs(distance),k_attraction2)));
 							}
 					}
 				}
@@ -293,6 +304,12 @@ void Fruchterman_Reingold(Cage_t* s)
 
 	}
 	printf("I : %d , Temp : %f \n",i,temperature);
-	printf("RMSD dist : %f \n",RSMD_Cage_dist(s->size, s->size, mat, s));
-	printf("RMSD angle : %f \n",RSMD_Cage_angle(s->size, s->size, mat, s));
+	RSMD_dist = RSMD_Cage_dist(s->size, s->size, mat, s);
+	RSMD_angle = RSMD_Cage_angle(s->size, s->size, mat, s);
+	printf("RMSD dist : %f \n",RSMD_dist);
+	printf("RMSD angle : %f \n", RSMD_angle);
+
+	fprintf(fp1,"%f,%f,%f\n",k_attraction2,RSMD_dist,RSMD_angle);
+	fclose(fp1);
+
 }

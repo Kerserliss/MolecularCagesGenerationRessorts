@@ -38,11 +38,25 @@ clock_t start_clock;
  */
 int main()
 {
+  int i = 0;
+  double k1_a = 1.34;
+  double k2_a = 1.22;
+  double k_r = 1.7;
+  char name1[100];
+	sprintf(name1, "Result_k_repulsion_%f_k_attraction1_%f.csv",k_r,k1_a);
+  FILE* fp1 = fopen(name1,"a");
+  fprintf(fp1,"K_attractivité1,RMSD_dist,RMSD_angle\n");
+  fclose(fp1);
+  
+  // while(i<100)
+  // {
   Cage_t* s = cageImport("src/demos_test/TestNoSub1path","0");
   Add_Path(s);
-  Fruchterman_Reingold(s);
-
-  cageWriteMol2_Spring("ResultSpring2_moc5.mol2",s);
+    
+  Fruchterman_Reingold(s,k1_a,k2_a,k_r,name1);
+  cageDelete(s);
+  cageWriteMol2_Spring("./Result_strange.mol2", s);
+  //  }
 }
 
 /**

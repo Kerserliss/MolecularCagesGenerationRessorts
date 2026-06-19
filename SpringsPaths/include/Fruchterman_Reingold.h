@@ -4,6 +4,7 @@
 #include "structure.h"
 double Repulsion_force(double x,double k);
 double Attraction_Force(double x,double k);
+double Attraction_Force_quatradic(double x, double k);
 double RSMD_Cage_dist(int n, int m, int** mat, Cage_t* s);
 double RSMD_Cage_angle(int n, int m, int** mat, Cage_t* s);
 void ptPrint(Point_t p);
@@ -12,6 +13,6 @@ void Add_Path(Cage_t* s);
 double LinearCoolingFunction(double temperature);
 double CoolingFunction(double temperature);
 void ComputeEdgeMat(Cage_t*s,int n, int m,int **mat);
-void Fruchterman_Reingold(Cage_t* s);
+void Fruchterman_Reingold(Cage_t* s, double k_attraction1,double k_attraction2, double k_repulsion,char* name1);
 
 #endif

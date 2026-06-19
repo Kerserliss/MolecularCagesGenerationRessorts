@@ -2,7 +2,7 @@
 TARGET   = springPaths
 
 CFLAGS=-Wall -g
-LDFLAGS=-lm -llapacke -llapack -lblas
+LDFLAGS=-lm 
 
 INCDIR=-Iinclude
 OBJDIR=obj
