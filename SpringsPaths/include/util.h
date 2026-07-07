@@ -244,4 +244,7 @@ char *getBasename(const char *in);
 
 double Al_kashi_therorem(double a, double b,double angle);
 
+double vectorLength(Point_t p);
+
+double random_double(double min, double max);
 #endif

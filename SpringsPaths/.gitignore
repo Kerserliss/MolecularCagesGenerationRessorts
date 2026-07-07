@@ -1,0 +1,9 @@
+/Results
+/Resulat_excel
+/.venv
+/bin/
+/src/main
+obj/*.o
+/PathsGeneration/obj
+/demos
+/demos_results

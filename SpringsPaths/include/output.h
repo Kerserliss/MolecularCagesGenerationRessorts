@@ -37,7 +37,7 @@ void cageWrite(Cage_t *);
 
 void cageWriteMol2(char *output, Cage_t *s, Paths_t *paths, int *interTree, int nbAtomPaths, double cumul_MSD);
 
-void cageWriteMol2_Spring(char *output, Cage_t *s);
+void cageWriteMol2_Spring(char *output, SpringPath_t* sp,time_t start, int collision, Options_t options);
 
 /**
  * @brief Write the output files for a given cage.

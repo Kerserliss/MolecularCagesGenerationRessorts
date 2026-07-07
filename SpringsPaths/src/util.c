@@ -392,3 +392,12 @@ double Al_kashi_therorem(double a, double b,double angle)
 {
     return sqrt(pow(a,2)+pow(b,2)-2*a*b*cos(angle));
 }
+
+double vectorLength(Point_t p)
+{
+    return sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
+}
+
+double random_double(double min, double max) {
+    return min + (max - min) * ((double)rand() / RAND_MAX);
+}

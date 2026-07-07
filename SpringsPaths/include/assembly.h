@@ -4,7 +4,8 @@
 #include "main.h"
 #include "structure.h"
 #include "substrat.h"
-
+#include "interconnection.h"
+#include <time.h>
 /** @file assembly.h
  *  @brief Functions related to generating whole cages.
  */
@@ -84,5 +85,9 @@ int effective_growth_limit(Paths_t *paths, int path_index, Options_t options);
  */
 void generatePaths(Cage_t *cage, int *interTree, Paths_t *paths, GridSubstrat *grid_sub, double ***substrat_t,
                    Options_t options, int *list_banned_edges, int *size_list_banned_edges);
+
+void SA_Parameters(Cage_t* s,GridSubstrat* gridSubstrat_t, Parameters* param, Options_t options, int** edge_mat);
+
+void SpringPathComputing(InterconnectionTreeStore tree_store,Cage_t* s, GridSubstrat* gridSubstrat_t,int numpath, time_t start,Options_t options);
 
 #endif

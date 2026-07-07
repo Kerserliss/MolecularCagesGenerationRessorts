@@ -1,6 +1,7 @@
 #ifndef _INTERCONNECTION_H
 #define _INTERCONNECTION_H
 
+#include <time.h>
 #include "main.h"
 #include "structure.h"
 #include "substrat.h"
@@ -24,6 +25,17 @@ extern int cpt_inter_tree_egv; // Extern global variable to count the number of 
  * and initializes a recursive search for interconnection trees, which are trees that span all components
  * by linking vertices between them. It frees allocated memory after the computation.
  */
-void findInterconnection(Cage_t *cage, GridSubstrat *gridSub, double ***substrat_t, Options_t options);
+void findInterconnection(Cage_t *cage, GridSubstrat *grid_sub, double ***substrat_t, time_t start, Options_t options);
+typedef struct {
+  int *edges;        // Copied edge list (pairs of vertices)
+  double total_size; // Sum of distances between the start and end of each path
+} StoredInterconnectionTree;
+
+typedef struct {
+  StoredInterconnectionTree *items;
+  size_t count;
+  size_t capacity;
+  int edge_slot_count;
+} InterconnectionTreeStore;
 
 #endif

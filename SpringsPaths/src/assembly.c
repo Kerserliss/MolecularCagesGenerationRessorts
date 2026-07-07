@@ -6,10 +6,12 @@
 #include "output.h"
 #include "thetaSelection.h"
 #include "util.h"
+#include "Fruchterman_Reingold.h"
 
+#include <stdio.h>
 #include <float.h>
 #include <math.h>
-
+#include <time.h>
 /**
  * @file assembly.c
  * @brief This file contains functions for generating connected cages.
@@ -454,7 +456,7 @@ static void generateCandidatePositions(Point_t carbon_center, Point_t v1, Point_
     }else{
       max_positions = MAX_POSITION_KEEP_360;
     }
-    
+
     if(distance_type == DISTANCE_EUCLIDEAN){// For Euclidean distances, prioritize optimal theta
       // Find the optimal theta for the next atom
       double theta_optimal = optimalTheta(carbon_center, end, v1, v2);
@@ -491,7 +493,7 @@ static void generateCandidatePositions(Point_t carbon_center, Point_t v1, Point_
         }
       }
     }
-  }else{ 
+  }else{
     // For non-Euclidean distances, with local discretization
     /* We have k intervals, of size t1,t2,...,tk and n positions to place (n=MAX_POSITION_KEEP_360)
      * We suppose k <= MAX_POSITION_KEEP_360 (else we warn before)
@@ -1118,7 +1120,7 @@ void generatePaths(Cage_t *cage, int *interTree, Paths_t *paths, GridSubstrat *g
             // end is put in paths->curPthPos[k]+1 but paths->curPthPos[k] is not increase by 1. End's hydrogen is in
             // paths->curPthPos[k]+2
 
-            //update the path NRMSD 
+            //update the path NRMSD
             paths->pathRMSD[paths->currentPath] = sqrt(((DIST_SIMPLE - distance_to_end)/DIST_ERROR) * ((DIST_SIMPLE - distance_to_end)/DIST_ERROR) +
                                                   (END_ANGLE - before_last_angle)/ANGLE_ERROR * ((END_ANGLE - before_last_angle)/ANGLE_ERROR) +
                                                   (END_ANGLE - last_angle)/ANGLE_ERROR * ((END_ANGLE - last_angle)/ANGLE_ERROR)
@@ -1216,4 +1218,196 @@ void generatePaths(Cage_t *cage, int *interTree, Paths_t *paths, GridSubstrat *g
     // printf("max_path_reached: %d\n", max_path_reached);
     addbannedEdges(cage, interTree, max_path_reached, list_banned_edges, size_list_banned_edges);
   }
+}
+
+void SA_Parameters(Cage_t* s,GridSubstrat* gridSubstrat_t, Parameters* param, Options_t options, int** edge_mat)
+{
+
+    if(options.verbose)
+        printf("In SA \n");
+
+    double temp = TEMPERATURE_SA;
+    Cage_t* s_work = cageCopy(s);
+
+    if(options.verbose)
+        printf("Cage copied \n");
+
+    double mat_RMSD_current[2];
+    Fruchterman_Reingold(s_work,param->k1_a,param->k2_a,param->k_r,gridSubstrat_t,STEP_GRID,mat_RMSD_current,edge_mat,options);
+    if(options.verbose)
+        printf("Fruchterman_Reingold done \n");
+    cageDelete(s_work);
+    double temp_k1a,temp_k2a,temp_kr;
+    double delta_RMSD;
+    while( temp > 1)
+    {
+        if(options.verbose)
+        {
+            printf("Temp : %f \n",temp);
+            fflush(stdout);
+        }
+        // Setting new param
+        // if(options.verbose)
+        // {
+        //     printf("Setting new parameters \n");
+        //     fflush(stdout);
+        // }
+        temp_k1a = param->k1_a + random_double(-1, 1);
+        temp_k2a = param->k2_a + random_double(-1, 1);
+        temp_kr = param->k_r + random_double(-1, 1);
+        double mat_RMSD_new[2];
+
+        s_work = cageCopy(s);
+        // if(options.verbose)
+        // {
+        //     printf("Cage copied \n");
+        //     fflush(stdout);
+        // }
+        Fruchterman_Reingold(s_work,temp_k1a,temp_k2a,temp_kr,gridSubstrat_t,STEP_GRID,mat_RMSD_new,edge_mat,options);
+
+        delta_RMSD = mat_RMSD_new[1]-mat_RMSD_current[1];
+        if (options.verbose)
+        {
+            printf("Best : %f \n", mat_RMSD_current[1]);
+            printf("Current : %f \n",mat_RMSD_new[1]);
+        }
+        if(delta_RMSD<0)
+        {
+            if (options.verbose)
+                printf("Accepted by RMSD \n");
+
+            param->k1_a = temp_k1a;
+            param->k2_a = temp_k2a;
+            param->k_r = temp_kr;
+            mat_RMSD_current[0] = mat_RMSD_new[0];
+            mat_RMSD_current[1] = mat_RMSD_new[1];
+        }
+        else if  (random_double(0,1)<exp(-delta_RMSD/temp))
+        {
+            if (options.verbose)
+            printf("Accepted by probability \n");
+            param->k1_a = temp_k1a;
+            param->k2_a = temp_k2a;
+            param->k_r = temp_kr;
+            mat_RMSD_current[0] = mat_RMSD_new[0];
+            mat_RMSD_current[1] = mat_RMSD_new[1];
+        }
+
+        temp = temp * COOLING_RATE_SA;
+        //printf("Temp : %f \n",temp);
+        cageDelete(s_work);
+    }
+}
+
+int CollisionEvaluation(Cage_t* s, GridSubstrat* gridSubstrat_t)
+{
+    int collision  = 0;
+    for(int i = 0; i< s->size; i++)
+    {
+        if(checkGridCollisionSubstratPointT(coords(atom(s,i)), gridSubstrat_t, STEP_GRID))
+        {
+            collision+= 1;
+        }
+    }
+    return collision;
+}
+
+void SpringPathComputing(InterconnectionTreeStore tree_store,Cage_t* s, GridSubstrat* gridSubstrat_t,int numpath, time_t start,Options_t options)
+{
+    //printf("In Spring Path \n");
+    // Value Initialization
+    Parameters* param = malloc(sizeof(Parameters));
+    param->k1_a = 1.5;
+    param-> k2_a = 1.22;
+    param-> k_r = 1.7;
+    double mat_RMSD[2];
+    List_p* Path_list = lstpCreate();
+    Cage_t* s_try;
+    double dist_Alkashi = Al_kashi_therorem(1.5,1.5,1.9111355309338)/2;
+    int id_source, id_target, nb_atom_to_place;
+
+
+
+    // Computing Path for each
+    for (int i = 0; i<options.maxResults &&i<tree_store.count; i++)
+    {
+        if (options.verbose)
+            printf("Trying to coping cape \n");
+        s_try = cageCopy(s);
+        if (options.verbose)
+            printf("Cage copied \n");
+        if (options.verbose)
+        {
+            printf("Adding Path %d\n",i);
+            printf("Numpath %d \n",numpath);
+        }
+        for(int j = 0; j<numpath; j++)
+        {
+            if (options.verbose)
+            {
+                printf("Adding path %d \n",j);
+                printf("Count tree %ld \n",tree_store.count);
+                printf("Edge %d \n",tree_store.items[i].edges[0]);
+            }
+            id_source = tree_store.items[i].edges[j*2];
+
+            id_target = tree_store.items[i].edges[j*2 + 1];
+            nb_atom_to_place = dist(coords(atom(s_try,id_source)),coords(atom(s_try,id_target)))/dist_Alkashi;
+
+            Add_Path(s_try,id_source,id_target,nb_atom_to_place);
+        }
+        if (options.verbose)
+        {
+            printf("Computing edge matrix\n");
+            printf("Size : %d \n",s_try->size);
+        }
+        int** edge_mat = (int**)malloc(s_try->size*sizeof(int*));
+    	for(int i = 0; i<s_try->size;i++)
+    	{
+    		edge_mat[i] = (int*)malloc(s_try->size*sizeof(int));
+    	}
+        ComputeEdgeMat(s_try, s_try->size, s_try->size, edge_mat);
+        if (options.verbose)
+            printf("Done edge matrix\n");
+        if (i == 0)
+        {
+            if (options.verbose)
+            {
+                printf("SA anneling \n");
+            }
+            SA_Parameters(s_try, gridSubstrat_t, param,options,edge_mat);
+        }
+        if (options.verbose)
+            printf("Fruchterman %d \n",i);
+        Fruchterman_Reingold(s_try,param->k1_a,param->k2_a,param->k_r,gridSubstrat_t,STEP_GRID,mat_RMSD,edge_mat,options);
+        if (options.verbose)
+            printf("RMSD_dist : %f \nRMSD_angle : %f\n",mat_RMSD[0], mat_RMSD[1]);
+
+        if (options.verbose)
+            printf("Creating path \n");
+        SpringPath_t* sp = CreateSPath(Path_list->size, cageCopy(s_try), mat_RMSD[0], mat_RMSD[1]);
+        if (options.verbose)
+            printf("AddingPath \n");
+        lstpAddElement(Path_list, sp);
+        cageDelete(s_try);
+    }
+    if (options.verbose)
+        printf("Searching best path\n");
+    // Finding the best moc.
+    SpringPath_t* sp_dist = lstpMinRMSDDist(Path_list);
+    SpringPath_t* sp_angle = lstpMinRMSDAngle(Path_list);
+
+    //Try to have the best moc.
+    int collision = CollisionEvaluation(sp_angle->cage, gridSubstrat_t);
+
+    if (options.verbose)
+        printf("Writing best path angle\n");
+    cageWriteMol2_Spring(options.output, sp_angle,start,collision, options);
+    // TODO remove unless needed
+    // if(sp_dist->id != sp_angle->id)
+    // {
+    //     printf("Writting best path dist\n");
+    //     cageWriteMol2_Spring("Result_complete_dist.mol2",sp_dist->cage);
+    // }
+
 }

@@ -6,9 +6,11 @@
  * partial cage from an input .moc2 and generates whole cages.
  */
 
+
+
 #include <getopt.h>
 #include <math.h>
-#include <signal.h>
+//#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -36,27 +38,98 @@ clock_t start_clock;
  * @param argv Array of command-line arguments.
  * @return Exit status of the program.
  */
-int main()
+int main(int argc, char** argv)
 {
-  int i = 0;
-  double k1_a = 1.34;
-  double k2_a = 1.22;
-  double k_r = 1.7;
-  char name1[100];
-	sprintf(name1, "Result_k_repulsion_%f_k_attraction1_%f.csv",k_r,k1_a);
-  FILE* fp1 = fopen(name1,"a");
-  fprintf(fp1,"K_attractivité1,RMSD_dist,RMSD_angle\n");
-  fclose(fp1);
-  
-  // while(i<100)
-  // {
-  Cage_t* s = cageImport("src/demos_test/TestNoSub1path","0");
-  Add_Path(s);
-    
-  Fruchterman_Reingold(s,k1_a,k2_a,k_r,name1);
-  cageDelete(s);
-  cageWriteMol2_Spring("./Result_strange.mol2", s);
-  //  }
+    srand((unsigned)time(NULL));
+    time_t start = time(&start);
+    /******************************** Options *****/
+    int opt;
+    Options_t options = {NULL,
+                         NULL,
+                         NULL,
+                         DEFLT_SIZEMAX,
+                         DEFLT_MAX_RESULTS,
+                         DEFLT_BANNED_EDGES,
+                         DEFLT_ONE_CAGE_BY_INTERCONNECTION_TREE,
+                         DEFLT_PATH_BOUNDARY,
+                         DEFLT_DYNAMIC_PATH_LIMIT,
+                         DEFLT_SORT_INTERCONNECTION_TREES,
+                         DEFLT_SPRING_PATH,
+                         DEFLT_VERBOSE};
+    options.enablePathBoundary = is_path_boundary_filter_enabled();
+    int boundary_cli_override = 0;
+    //printf("After default option\n");
+
+    while ((opt = getopt(argc, argv, OPTSTR)) != EOF) {
+        switch (opt) {
+        case 'i':
+            options.input = optarg;
+            break;
+        case 'n':
+            options.numMoc = optarg;
+            break;
+        case 'o':
+            options.output = optarg;
+            break;
+        case 's':
+            options.sizeMaxPath = atoi(optarg);
+            break;
+        case 'r':
+            options.maxResults = atoi(optarg);
+            break;
+        case 'b':
+            options.isBannedEdges = atoi(optarg);
+            break;
+        case 't':
+            options.oneCageByInterconnectionTree = atoi(optarg);
+            break;
+        case 'p':
+            options.enablePathBoundary = atoi(optarg);
+            set_path_boundary_filter_enabled(options.enablePathBoundary != 0);
+            boundary_cli_override = 1;
+            break;
+        case 'l':
+            options.enableDynamicPathLimit = atoi(optarg);
+            break;
+        case 'g':
+            options.sortInterTreesBeforePaths = atoi(optarg);
+            break;
+        case 'c' :
+            options.springPath = atoi(optarg);
+            break;
+        case 'v' :
+            options.verbose = atoi(optarg);
+            break;
+
+        case 'h':
+        default:
+            usage();
+            break;
+
+      }
+    }
+    if (options.output == NULL) {
+        options.output = DEFLT_OUTPUTPATH;
+    }
+  // printf("In main before opening file\n");
+  // char name1[100];
+  // sprintf(name1, "Result_k_repulsion_%f_k_attraction1_%f_quadratic.csv",k_r,k1_a);
+  // FILE* fp1 = fopen(name1,"w");
+  // fprintf(fp1,"K_attraction2;RMSD_dist;RMSD_angle\n");
+  // fclose(fp1);
+  // printf("In main after opening file\n");
+
+  // Chargement du substrat :
+  double **substrat_t = NULL;
+  GridSubstrat grid_sub = importSubstratToGrid(options.input, &substrat_t);
+
+  Cage_t *import_cage = cageImport(options.input, options.numMoc,options);
+  if (options.verbose)
+      printf("Loaded\n");
+  findInterconnection(import_cage, &grid_sub, &substrat_t, start, options);
+  freeGridSubstrat(grid_sub);
+  free2DDouble(substrat_t, grid_sub.substratSize);
+  cageDelete(import_cage);
 }
 
 /**

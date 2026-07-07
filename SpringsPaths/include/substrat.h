@@ -179,6 +179,23 @@ int checkGridCollisionSubstratFloatTable(double point[3], GridSubstrat *gridSubs
 int checkGridCollisionSubstratPointT(Point_t p, GridSubstrat *gridSubstrat, double step);
 
 /**
+ * @brief Checks for collision of a point with a substrate grid.
+ *
+ * This function determines if a given point is within a defined grid substrate.
+ * It calculates the grid cell corresponding to the point and checks for collisions
+ * with any points in that cell.
+ *
+ * @param point A Point_t structure.
+ * @param gridSubstrat A pointer to the GridSubstrat structure that contains information
+ *                     about the grid and its properties, such as dimensions and point data.
+ * @param step The size of each grid cell. It determines how the 3D point maps to the grid.
+ * @return Returns the point who collision if detected (i.e., the point is close to any points
+ *         in the grid cell), or 0 if no collision is detected (i.e., the point is
+ *         outside the grid or there are no nearby points).
+ */
+double* checkGridCollisionSubstratPointTReturnPoint(Point_t p, GridSubstrat *gridSubstrat, double step);
+
+/**
  * @brief Generates statistics about the points in the substrate grid.
  *
  * This function computes several statistics for a given GridSubstrat. It evaluates

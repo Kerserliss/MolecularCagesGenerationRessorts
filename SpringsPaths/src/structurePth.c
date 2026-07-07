@@ -1,6 +1,7 @@
 #include "discretization.h"
 #include "distance.h"
 #include "structure.h"
+
 //#include "util.h"
 
 /**
@@ -412,4 +413,30 @@ void pthPrintOrWriteAll(Paths_t *paths, const char *filename) {
     fclose(file);
 
 #undef PRINT
+}
+
+SpringPath_t* CreateSPath(int id,Cage_t* s, double RMSD_dist, double RMSD_angle)
+{
+    SpringPath_t* sp = malloc(sizeof(SpringPath_t));
+    InitSPath(sp);
+    printf("Init path done\n");
+    sp->id = id;
+    sp->cage = s;
+    sp->RMSD_dist = RMSD_dist;
+    sp->RMSD_angle = RMSD_angle;
+    return sp;
+}
+
+void InitSPath(SpringPath_t* sp)
+{
+    sp->id = -1;
+    sp->cage = malloc(sizeof(Cage_t*));
+    sp->RMSD_dist = 0;
+    sp->RMSD_angle = 0;
+}
+
+void DestroySPath(SpringPath_t* sp)
+{
+    cageDelete(sp->cage);
+    free(sp);
 }

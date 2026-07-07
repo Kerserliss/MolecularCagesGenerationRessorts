@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "assembly.h"
 #include "constant.h"
@@ -11,6 +12,7 @@
 #include "distance.h"
 #include "interconnection.h"
 #include "util.h"
+
 
 /**
  * @file interconnection.c
@@ -95,18 +97,6 @@ void connectedComponents(Cage_t *s, int *V, int *num_components) {
 // ENUMERATION
 
 int cpt_inter_tree_egv = 0; // Extern global variable to count the number of interconnection trees
-
-typedef struct {
-  int *edges;        // Copied edge list (pairs of vertices)
-  double total_size; // Sum of distances between the start and end of each path
-} StoredInterconnectionTree;
-
-typedef struct {
-  StoredInterconnectionTree *items;
-  size_t count;
-  size_t capacity;
-  int edge_slot_count;
-} InterconnectionTreeStore;
 
 /**
  * @brief Initialize the bookkeeping structure that caches candidate trees.
@@ -521,7 +511,8 @@ void enumInterconnectionTrees(int *vertices_link_id_comp, int *tab_c, int *inter
       }
     }
   }
-
+  if (tree_store->count > 50000000)
+      return;
   // Base case: if we have enough edges,
   if (K >= (k - 1)) {
     if (tree_store) {
@@ -657,7 +648,7 @@ void enumInterconnectionTrees(int *vertices_link_id_comp, int *tab_c, int *inter
  * @see connectedComponents
  * @see enumInterconnectionTrees
  */
-void findInterconnection(Cage_t *cage, GridSubstrat *grid_sub, double ***substrat_t, Options_t options) {
+void findInterconnection(Cage_t *cage, GridSubstrat *grid_sub, double ***substrat_t, time_t start, Options_t options) {
   // Example usage:
   int num_vertex = size(cage);
   int num_components;
@@ -709,10 +700,12 @@ void findInterconnection(Cage_t *cage, GridSubstrat *grid_sub, double ***substra
   if (min_vertices_component == INT_MAX) {
     min_vertices_component = 0;
   }
-
-  printf("COMPONENT_SUMMARY components=%d min_vertices=%d max_vertices=%d\n", num_components,
-         min_vertices_component, max_vertices_component);
-  fflush(stdout);
+  if (options.verbose)
+  {
+    printf("COMPONENT_SUMMARY components=%d min_vertices=%d max_vertices=%d\n", num_components,
+            min_vertices_component, max_vertices_component);
+    fflush(stdout);
+  }
 
   free(all_vertices);
   // printf("num comp %d \n", num_components);
@@ -729,12 +722,19 @@ void findInterconnection(Cage_t *cage, GridSubstrat *grid_sub, double ***substra
   int edge_slot_count = 2 * (num_components - 1);
   int *inter_tree = malloc(edge_slot_count * sizeof(int)); // Interconnection tree working buffer
   Paths_t *paths = pthCreate(options.sizeMaxPath, num_components);
+  Grid_t *grid;
+  MinHeap_t *minHeap;
   if (get_current_distance_type() != DISTANCE_EUCLIDEAN) {
     createGrid(paths->grids[0], cage, paths, substrat_t, grid_sub);
     initMinHeap(paths->minHeaps[0], paths->grids[0]->depth * paths->grids[0]->width * paths->grids[0]->height);
     // writeGridToMol2(paths->grids[0], "grid.mol2", 0);
     // writeGridToMol2(paths->grids[0], "gridFull.mol2", 1);
   }
+  // if(options.springPath)
+  // {
+  //     createGrid(grid, cage, paths, substrat_t, grid_sub);
+  //     initMinHeap(minHeap, paths->grids[0]->depth * paths->grids[0]->width * paths->grids[0]->height);
+  // }
 
   InterconnectionTreeStore tree_store;
   InterconnectionTreeStore *store_ptr = NULL;
@@ -747,21 +747,48 @@ void findInterconnection(Cage_t *cage, GridSubstrat *grid_sub, double ***substra
                            num_vertex_linkable - (2 * (num_components - 1)), cage, paths, grid_sub, substrat_t,
                            options, list_banned_edges, &size_list_banned_edges, store_ptr);
 
+  if (store_ptr !=NULL && store_ptr->count == 0)
+  {
+      if (options.verbose)
+      {
+          printf("Path too short\n");
+      }
+      int max_delta = 0;
+      while(store_ptr->count ==0&& max_delta<15)
+      {
+          options.sizeMaxPath += 1;
+          max_delta += 1;
+          if (options.verbose)
+          {
+              printf("sizeMaxPath : %d \nMax delta : %d\n",options.sizeMaxPath,max_delta);
+          }
+          enumInterconnectionTrees(vertices_link_id_comp, tab_c, inter_tree, num_vertex_linkable, num_components, 0, 0,
+                                   num_vertex_linkable - (2 * (num_components - 1)), cage, paths, grid_sub, substrat_t,
+                                   options, list_banned_edges, &size_list_banned_edges, store_ptr);
+      }
+  }
   if (store_ptr) {
+    if (options.verbose)
+        printf("In store \n");
     int num_paths = (edge_slot_count > 0) ? edge_slot_count / 2 : 0;
     for (size_t i = 0; i < tree_store.count; i++) {
-      if (num_paths > 0) {
-        pthInit(paths, tree_store.items[i].edges, cage);
-      }
-      tree_store.items[i].total_size =
+        if (num_paths > 0 && !(options.springPath)) {
+            pthInit(paths, tree_store.items[i].edges, cage);
+        }
+        tree_store.items[i].total_size =
           computeTreeTotalSize(&tree_store.items[i], num_paths, cage, paths, grid_sub, substrat_t);
     }
 
     if (tree_store.count > 1) {
+      if(options.verbose)
+          printf("Sort tree \n");
       qsort(tree_store.items, tree_store.count, sizeof(StoredInterconnectionTree), compareStoredTrees);
     }
-
-    if (num_paths > 0) {
+    if (options.springPath)
+    {
+        SpringPathComputing(tree_store,cage, grid_sub, num_paths,start, options);
+    }
+    if (num_paths > 0 && !(options.springPath)) {
       for (size_t i = 0; i < tree_store.count; i++) {
         if (options.isBannedEdges == 1 && size_list_banned_edges > 0 &&
             treeContainsBannedEdge(tree_store.items[i].edges, num_paths, list_banned_edges, size_list_banned_edges)) {

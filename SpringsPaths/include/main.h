@@ -18,6 +18,7 @@
 typedef struct {
   char *input;                      /**< Input filename */
   char *numMoc;                     /**< Moc Number */
+  char *output;
   int sizeMaxPath;                  /**< Maximum size of path*/
   int maxResults;                   /**< Maximum results */
   int isBannedEdges;                /**< Banned edges 0 = false, 1 = true*/
@@ -25,6 +26,8 @@ typedef struct {
   int enablePathBoundary;           /**< Enable DIST_PATH_BOUNDARY pruning 0 = false, 1 = true */
   int enableDynamicPathLimit;       /**< Enable adaptive cut-off once a shorter path is discovered */
   int sortInterTreesBeforePaths;    /**< 1 = store & sort interconnection trees, 0 = generate on-the-fly */
+  int springPath;                   /**< 1 = Spring path, 0 = normal way to generate path >*/
+  int verbose;
 } Options_t;
 
 /**

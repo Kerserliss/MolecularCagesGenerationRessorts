@@ -10,16 +10,18 @@
 /** @def OPTSTR
  *  @brief Command-line options string for getopt.
  */
-#define OPTSTR "i:n:s:r:b:t:p:l:g:h"
+#define OPTSTR "i:n:o:s:r:b:t:p:l:g:c:v:h"
 
 /** @def USAGE_FMT
  *  @brief Usage format string for displaying program options.
  */
 #define USAGE_FMT                                                                                                      \
-  "usage : [-i input directory] [-n moc number] [-s sizemaxpath (default : %d)] [-r maxresults (default : %d)] [-b "   \
+  "usage : [-i input directory] [-n moc number] [-o output file path] [-s sizemaxpath (default : %d)] [-r maxresults (default : %d)] [-b "   \
   "isBannedEdges (default : %d)] [-t oneCageByInterconnectionTree (default : %d)] [-p enablePathBoundary (default : %d)] [-l " \
   "bestPathCutoff (default : %d)] [-g interTreeMode (default : %d, 0=on-the-fly, 1=store-sort)] " \
   "[-h]\n"
+
+#define DEFLT_OUTPUTPATH "result.mol2"
 
 /** @def DEFLT_SIZEMAX
  *  @brief Default maximum size of a path created in number of patterns.
@@ -58,6 +60,10 @@
  *  The default value keeps the legacy on-the-fly behavior; switch to 1 to buffer and sort.
  */
 #define DEFLT_SORT_INTERCONNECTION_TREES 0
+
+#define DEFLT_SPRING_PATH 0
+
+#define DEFLT_VERBOSE 0
 
 // Structure
 
@@ -338,10 +344,14 @@
 
 #define K_FRUCH_REIN 1.5
 
-#define ITERATIONS 10000
+#define ITERATIONS 100000
 
 #define TEMPERATURE 500
 
-#define COOLING_RATE 0.999
+#define COOLING_RATE 0.9999
+
+#define TEMPERATURE_SA 5
+
+#define COOLING_RATE_SA 0.99
 
 #endif

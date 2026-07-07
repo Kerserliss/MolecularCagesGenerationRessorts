@@ -415,6 +415,23 @@ int checkGridCollisionSubstratPointT(Point_t p, GridSubstrat *grid_substrat, dou
   return 0;
 }
 
+double* checkGridCollisionSubstratPointTReturnPoint(Point_t p, GridSubstrat *grid_substrat, double step)
+{
+
+  int x_pos = (int)((p.x - grid_substrat->xMin) / step);
+  int y_pos = (int)((p.y - grid_substrat->yMin) / step);
+  int z_pos = (int)((p.z - grid_substrat->zMin) / step);
+  if (x_pos < 0 || x_pos >= grid_substrat->xSize || y_pos < 0 || y_pos >= grid_substrat->ySize || z_pos < 0 ||
+      z_pos >= grid_substrat->zSize)
+    return NULL;
+  double *address = getNumPointsAddre(*grid_substrat, x_pos, y_pos, z_pos);
+  double *max_address = address + (3 * ((int)*address));
+  for (double *i = address + 3; i <= max_address; i += 3) { // itération sur les adresses
+    if (squaredEuclideanDistancefloatPointT(p, i) < (DIST_GAP_SUBSTRATE * DIST_GAP_SUBSTRATE))
+      return i;
+  }
+  return NULL;
+}
 /**
  * @brief Generates statistics about the points in the substrate grid.
  *

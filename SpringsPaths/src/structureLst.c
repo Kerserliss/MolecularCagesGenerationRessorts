@@ -3,6 +3,7 @@
 #include "structure.h"
 #include "util.h"
 
+#include <float.h>
 #include <limits.h>
 
 /**
@@ -433,4 +434,97 @@ void lstsPrint(List_s *list) {
            cursor->distance);
     cursor = cursor->next;
   }
+}
+
+// List_p
+
+void lstpInit(List_p* lp)
+{
+    lp->Path_array = NULL;
+    lp->size = 0;
+    lp->allocated_size = 0;
+}
+
+List_p* lstpCreate()
+{
+    List_p* lp = malloc(sizeof(List_p*));
+    lstpInit(lp);
+    return lp;
+}
+
+void lstpAddElement(List_p* lp, SpringPath_t* sp)
+{
+    if(lp->size + 1 > lp->allocated_size)
+        lstpAddAlloc(lp);
+    lp->Path_array[lp->size] = sp;
+    lp->size += 1;
+}
+
+void lstpRemoveElement(List_p* lp, int id)
+{
+    for(int i = 0;i<lp->size;i++)
+    {
+        if (lp->Path_array[i]->id == id)
+        {
+            DestroySPath(lp->Path_array[i]);
+            for (int k = i; k<lp->size-1;k++)
+            {
+                lp->Path_array[k] = lp->Path_array[k+1];
+            }
+            lp->Path_array[lp->size] = CreateSPath(-1,NULL, -1, -1);;
+            i = lp->size +1;
+            lp->size -= 1;
+        }
+    }
+}
+
+SpringPath_t* lstpGetPath(List_p* lp, int id)
+{
+    for(int i = 0;i<lp->size;i++)
+    {
+        if (lp->Path_array[i]->id == id)
+        {
+            return lp->Path_array[i];
+        }
+    }
+    return NULL;
+}
+SpringPath_t* lstpMinRMSDDist(List_p* lp)
+{
+    double min = DBL_MAX;
+    int index = 0;
+    for(int i = 0;i<lp->size;i++)
+    {
+        if (lp->Path_array[i]->RMSD_dist < min)
+        {
+             min = lp->Path_array[i]->RMSD_dist;
+             index = i;
+        }
+    }
+    return lp->Path_array[index];
+}
+
+SpringPath_t* lstpMinRMSDAngle(List_p* lp)
+{
+    double min = DBL_MAX;
+    int index = 0;
+    for(int i = 0;i<lp->size;i++)
+    {
+        if (lp->Path_array[i]->RMSD_angle < min)
+        {
+             min = lp->Path_array[i]->RMSD_angle;
+             index = i;
+        }
+    }
+    return lp->Path_array[index];
+}
+
+void lstpAddAlloc(List_p* lp)
+{
+    lp->Path_array = realloc(lp->Path_array,(lp->allocated_size + REALLOCSIZE)*sizeof(SpringPath_t*));
+    for(int i = 0; i<REALLOCSIZE;i++)
+    {
+        lp->Path_array[i+lp->size] = CreateSPath(-1,NULL, -1, -1);
+    }
+    lp->allocated_size += REALLOCSIZE;
 }

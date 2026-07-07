@@ -2,6 +2,7 @@
 #define __STRUCTURE_H
 
 #include "constant.h"
+#include "main.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -325,6 +326,23 @@ typedef struct {
   int *bestPathLength;          /**< Best number of real patterns (without start/start neighbor) found per path, -1 if none. */
   int *maxGrowthLimit;          /**< Current depth limit (curPthPos) allowed for each path. */
 } Paths_t;
+
+/**************************************/
+/* SPRINGS PATHS **********************/
+/**************************************/
+typedef struct {
+    int id;
+    Cage_t* cage;
+    double RMSD_dist;
+    double RMSD_angle;
+} SpringPath_t;
+
+typedef struct {
+    SpringPath_t** Path_array;
+    int size;
+    int allocated_size;
+} List_p;
+
 
 // DEFINITION
 // Point
@@ -813,7 +831,7 @@ void cageDelete(Cage_t *);
  */
 void cageDeleteAtom(AtomCage_t *a);
 
-Cage_t *cageImport(char *inputname, char *mocNum);
+Cage_t *cageImport(char *inputname, char *mocNum, Options_t options);
 
 // Path
 
@@ -923,6 +941,34 @@ void printMinHeap(MinHeap_t *heap);
  * @param heap Pointer to the MinHeap to be freed.
  */
 void freeMinHeap(MinHeap_t *heap);
+
+SpringPath_t* CreateSPath(int id,Cage_t* s, double RMSD_dist, double RMSD_angle);
+
+void InitSPath(SpringPath_t* sp);
+
+void DestroySPath(SpringPath_t* sp);
+
+void lstpInit(List_p* lp);
+
+List_p* lstpCreate();
+
+void lstpAddElement(List_p* lp, SpringPath_t* sp);
+
+void lstpRemoveElement(List_p* lp, int id);
+
+SpringPath_t* lstpGetPath(List_p* lp, int id);
+
+SpringPath_t* lstpMinRMSDDist(List_p* lp);
+
+SpringPath_t* lstpMinRMSDAngle(List_p* lp);
+
+void lstpAddAlloc(List_p* lp);
+
+typedef struct {
+    double k_r;
+    double k1_a;
+    double k2_a;
+} Parameters;
 
 
 #endif
