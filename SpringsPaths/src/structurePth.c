@@ -419,7 +419,7 @@ SpringPath_t* CreateSPath(int id,Cage_t* s, double RMSD_dist, double RMSD_angle)
 {
     SpringPath_t* sp = malloc(sizeof(SpringPath_t));
     InitSPath(sp);
-    printf("Init path done\n");
+
     sp->id = id;
     sp->cage = s;
     sp->RMSD_dist = RMSD_dist;

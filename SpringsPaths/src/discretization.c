@@ -336,6 +336,7 @@ void createGrid(Grid_t *grid, Cage_t *cage, Paths_t *paths, double ***substrat_t
   int size_z = (int)ceil(MAX(fabs(grid_max_z), fabs(grid_min_z)) / STEP_GRID_VOXEL);
 
   // Create the grid with these calculated sizes
+
   initGrid(grid, size_x, size_y, size_z);
   markVoxels(grid, cage, paths, substrat_t, grid_sub->substratSize);
 }

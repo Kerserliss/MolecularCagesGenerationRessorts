@@ -10,7 +10,7 @@
 /** @def OPTSTR
  *  @brief Command-line options string for getopt.
  */
-#define OPTSTR "i:n:o:s:r:b:t:p:l:g:c:v:h"
+#define OPTSTR "i:n:o:s:r:b:t:p:l:g:c:v:d:h"
 
 /** @def USAGE_FMT
  *  @brief Usage format string for displaying program options.
@@ -64,6 +64,8 @@
 #define DEFLT_SPRING_PATH 0
 
 #define DEFLT_VERBOSE 0
+
+#define DEFLT_DISTANCE 0
 
 // Structure
 

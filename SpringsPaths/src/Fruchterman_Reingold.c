@@ -37,6 +37,8 @@ double RSMD_Cage_dist(int n, int m, int** mat, Cage_t* s)
             }
         }
     }
+    if (RMSD <0.0001)
+        return RMSD;
     RMSD = sqrt(RMSD/compteur);
     return RMSD;
 }
@@ -73,6 +75,8 @@ double RSMD_Cage_angle(int n, int m, int** mat, Cage_t* s)
             }
         }
     }
+    if (RMSD <0.0001)
+        return RMSD;
     RMSD = sqrt(RMSD/compteur);
     return RMSD;
 }
@@ -171,11 +175,9 @@ void ComputeEdgeMat(Cage_t*s,int n, int m,int** mat)
 	for(int i = 0; i<n; i++)
 	{
 		AtomCage_t* Current_atom = atom(s,i);
-		printf("i : %d \n",i);
 		// We initialize each case of our matrix.
 		for(int k = 0; k<m;k++)
 		{
-		    printf("k : %d \n",k);
 			mat[i][k] = -1;
 		}
 		// For each neighbord, we change the corresponding case, replacing -1 by 1.

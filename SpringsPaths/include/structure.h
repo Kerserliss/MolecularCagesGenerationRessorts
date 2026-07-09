@@ -968,6 +968,7 @@ typedef struct {
     double k_r;
     double k1_a;
     double k2_a;
+    double RMSD_angle;
 } Parameters;
 
 

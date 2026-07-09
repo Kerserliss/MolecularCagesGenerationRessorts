@@ -55,7 +55,8 @@ int main(int argc, char** argv)
                          DEFLT_DYNAMIC_PATH_LIMIT,
                          DEFLT_SORT_INTERCONNECTION_TREES,
                          DEFLT_SPRING_PATH,
-                         DEFLT_VERBOSE};
+                         DEFLT_VERBOSE,
+                         DEFLT_DISTANCE};
     options.enablePathBoundary = is_path_boundary_filter_enabled();
     int boundary_cli_override = 0;
     //printf("After default option\n");
@@ -99,6 +100,9 @@ int main(int argc, char** argv)
             break;
         case 'v' :
             options.verbose = atoi(optarg);
+            break;
+        case 'd':
+            options.distance_type = atoi(optarg);
             break;
 
         case 'h':

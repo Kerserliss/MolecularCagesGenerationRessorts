@@ -722,19 +722,14 @@ void findInterconnection(Cage_t *cage, GridSubstrat *grid_sub, double ***substra
   int edge_slot_count = 2 * (num_components - 1);
   int *inter_tree = malloc(edge_slot_count * sizeof(int)); // Interconnection tree working buffer
   Paths_t *paths = pthCreate(options.sizeMaxPath, num_components);
-  Grid_t *grid;
-  MinHeap_t *minHeap;
+
   if (get_current_distance_type() != DISTANCE_EUCLIDEAN) {
     createGrid(paths->grids[0], cage, paths, substrat_t, grid_sub);
     initMinHeap(paths->minHeaps[0], paths->grids[0]->depth * paths->grids[0]->width * paths->grids[0]->height);
     // writeGridToMol2(paths->grids[0], "grid.mol2", 0);
     // writeGridToMol2(paths->grids[0], "gridFull.mol2", 1);
   }
-  // if(options.springPath)
-  // {
-  //     createGrid(grid, cage, paths, substrat_t, grid_sub);
-  //     initMinHeap(minHeap, paths->grids[0]->depth * paths->grids[0]->width * paths->grids[0]->height);
-  // }
+
 
   InterconnectionTreeStore tree_store;
   InterconnectionTreeStore *store_ptr = NULL;
@@ -766,6 +761,11 @@ void findInterconnection(Cage_t *cage, GridSubstrat *grid_sub, double ***substra
                                    num_vertex_linkable - (2 * (num_components - 1)), cage, paths, grid_sub, substrat_t,
                                    options, list_banned_edges, &size_list_banned_edges, store_ptr);
       }
+      if (max_delta >0)
+      {
+          pthDelete(paths);
+          paths = pthCreate(options.sizeMaxPath,num_components);
+      }
   }
   if (store_ptr) {
     if (options.verbose)
@@ -775,8 +775,7 @@ void findInterconnection(Cage_t *cage, GridSubstrat *grid_sub, double ***substra
         if (num_paths > 0 && !(options.springPath)) {
             pthInit(paths, tree_store.items[i].edges, cage);
         }
-        tree_store.items[i].total_size =
-          computeTreeTotalSize(&tree_store.items[i], num_paths, cage, paths, grid_sub, substrat_t);
+        tree_store.items[i].total_size = computeTreeTotalSize(&tree_store.items[i], num_paths, cage, paths, grid_sub, substrat_t);
     }
 
     if (tree_store.count > 1) {
@@ -786,7 +785,18 @@ void findInterconnection(Cage_t *cage, GridSubstrat *grid_sub, double ***substra
     }
     if (options.springPath)
     {
-        SpringPathComputing(tree_store,cage, grid_sub, num_paths,start, options);
+        if(options.distance_type)
+        {
+            Grid_t *grid = calloc(1,sizeof(Grid_t));
+            MinHeap_t *minHeap = calloc(1,sizeof(MinHeap_t));
+            createGrid(grid, cage, paths, substrat_t, grid_sub);
+            initMinHeap(minHeap, grid->depth * grid->width * grid->height);
+            SpringPathComputing(tree_store,cage, grid_sub, num_paths,start,grid,minHeap, options);
+        }
+        else {
+            SpringPathComputing(tree_store,cage, grid_sub, num_paths,start,NULL,NULL, options);
+        }
+
     }
     if (num_paths > 0 && !(options.springPath)) {
       for (size_t i = 0; i < tree_store.count; i++) {

@@ -447,7 +447,7 @@ void lstpInit(List_p* lp)
 
 List_p* lstpCreate()
 {
-    List_p* lp = malloc(sizeof(List_p*));
+    List_p* lp = malloc(sizeof(List_p));
     lstpInit(lp);
     return lp;
 }

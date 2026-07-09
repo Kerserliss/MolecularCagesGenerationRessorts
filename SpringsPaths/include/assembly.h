@@ -88,6 +88,6 @@ void generatePaths(Cage_t *cage, int *interTree, Paths_t *paths, GridSubstrat *g
 
 void SA_Parameters(Cage_t* s,GridSubstrat* gridSubstrat_t, Parameters* param, Options_t options, int** edge_mat);
 
-void SpringPathComputing(InterconnectionTreeStore tree_store,Cage_t* s, GridSubstrat* gridSubstrat_t,int numpath, time_t start,Options_t options);
+void SpringPathComputing(InterconnectionTreeStore tree_store,Cage_t* s, GridSubstrat* gridSubstrat_t,int numpath, time_t start,Grid_t* grid, MinHeap_t* heap , Options_t options);
 
 #endif

@@ -27,7 +27,8 @@ typedef struct {
   int enableDynamicPathLimit;       /**< Enable adaptive cut-off once a shorter path is discovered */
   int sortInterTreesBeforePaths;    /**< 1 = store & sort interconnection trees, 0 = generate on-the-fly */
   int springPath;                   /**< 1 = Spring path, 0 = normal way to generate path >*/
-  int verbose;
+  int verbose;                      /**< 1 = verbose mode with print, 0 = no print >*/
+  int distance_type;                /**< 1 = Astar distance, 0 = euclidien >*/
 } Options_t;
 
 /**

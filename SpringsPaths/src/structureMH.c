@@ -73,14 +73,18 @@ static int rightChild(int i) { return 2 * i + 2; }
  * @param maxSize The maximum size of the MinHeap.
  */
 void initMinHeap(MinHeap_t *heap, int maxSize) {
+    printf("In MinHeap \n");
   // Free existing heap->nodes if already allocated
   if (heap->nodes) {
     free(heap->nodes);
     heap->nodes = NULL; // Set to NULL to avoid dangling pointers
   }
+  printf("After free existing node \n");
   heap->size = 0;
   heap->maxSize = maxSize;
+  printf("Before node \n");
   heap->nodes = (Node **)malloc(maxSize * sizeof(Node *));
+  printf("After node\n");
 }
 
 /**

@@ -1220,8 +1220,67 @@ void generatePaths(Cage_t *cage, int *interTree, Paths_t *paths, GridSubstrat *g
   }
 }
 
+int compareParameters(Parameters** best_param,int size,Parameters* param)
+{
+    for(int i =0; i<size;i++)
+    {
+        if (best_param[i]->RMSD_angle > param->RMSD_angle)
+        {
+            free(best_param[size-1]);
+            for (int j = size-1; j>i; j--)
+            {
+                best_param[j] = best_param[j-1];
+            }
+
+            best_param[i] = param;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+Parameters* initParam()
+{
+    Parameters* param = malloc(sizeof(Parameters));
+    param->k1_a = 0;
+    param->k2_a = 0;
+    param->k_r = 0;
+    param->RMSD_angle= DBL_MAX;
+    return param;
+}
+Parameters* initParamValue(double k1_a,double k2_a,double k_r,double RMSD_angle)
+{
+    Parameters* param = malloc(sizeof(Parameters));
+    param->k1_a = k1_a;
+    param->k2_a = k2_a;
+    param->k_r = k_r;
+    param->RMSD_angle= RMSD_angle;
+    return param;
+}
+
+Parameters** initBestParameters(int size)
+{
+    Parameters** best_param = malloc(sizeof(Parameters*)*size);
+    for(int i = 0; i<size; i++)
+    {
+        best_param[i] = initParam();
+    }
+    return best_param;
+}
+
+void deleteBestParameters(Parameters** best_param,int size)
+{
+    for(int i = 0; i<size;i++)
+    {
+        free(best_param[i]);
+    }
+    free(best_param);
+}
+
 void SA_Parameters(Cage_t* s,GridSubstrat* gridSubstrat_t, Parameters* param, Options_t options, int** edge_mat)
 {
+
+    Parameters** best_param = initBestParameters(3);
 
     if(options.verbose)
         printf("In SA \n");
@@ -1234,6 +1293,11 @@ void SA_Parameters(Cage_t* s,GridSubstrat* gridSubstrat_t, Parameters* param, Op
 
     double mat_RMSD_current[2];
     Fruchterman_Reingold(s_work,param->k1_a,param->k2_a,param->k_r,gridSubstrat_t,STEP_GRID,mat_RMSD_current,edge_mat,options);
+    param->RMSD_angle = mat_RMSD_current[1];
+    Parameters* inital_param = initParamValue(param->k1_a, param->k2_a, param->k_r, param->RMSD_angle);
+
+    compareParameters(best_param,3, inital_param);
+
     if(options.verbose)
         printf("Fruchterman_Reingold done \n");
     cageDelete(s_work);
@@ -1243,7 +1307,7 @@ void SA_Parameters(Cage_t* s,GridSubstrat* gridSubstrat_t, Parameters* param, Op
     {
         if(options.verbose)
         {
-            printf("Temp : %f \n",temp);
+            printf("Temperature : %f \n",temp);
             fflush(stdout);
         }
         // Setting new param
@@ -1268,19 +1332,27 @@ void SA_Parameters(Cage_t* s,GridSubstrat* gridSubstrat_t, Parameters* param, Op
         delta_RMSD = mat_RMSD_new[1]-mat_RMSD_current[1];
         if (options.verbose)
         {
-            printf("Best : %f \n", mat_RMSD_current[1]);
-            printf("Current : %f \n",mat_RMSD_new[1]);
+            printf("RMSD \n");
+            printf("\tBest : %f \n",best_param[0]->RMSD_angle);
+            printf("\tCurrent : %f \n", mat_RMSD_current[1]);
+            printf("\tNew : %f \n",mat_RMSD_new[1]);
         }
         if(delta_RMSD<0)
         {
             if (options.verbose)
                 printf("Accepted by RMSD \n");
-
             param->k1_a = temp_k1a;
             param->k2_a = temp_k2a;
             param->k_r = temp_kr;
+
             mat_RMSD_current[0] = mat_RMSD_new[0];
             mat_RMSD_current[1] = mat_RMSD_new[1];
+            Parameters * new_param = initParamValue(temp_k1a, temp_k2a, temp_kr, mat_RMSD_current[1]);
+            if(!(compareParameters(best_param,3, new_param)))
+            {
+                free(new_param);
+            }
+
         }
         else if  (random_double(0,1)<exp(-delta_RMSD/temp))
         {
@@ -1297,6 +1369,10 @@ void SA_Parameters(Cage_t* s,GridSubstrat* gridSubstrat_t, Parameters* param, Op
         //printf("Temp : %f \n",temp);
         cageDelete(s_work);
     }
+    param->k1_a = best_param[0]->k1_a;
+    param->k2_a = best_param[0]->k2_a;
+    param->k_r = best_param[0]->k_r;
+    deleteBestParameters(best_param, 3);
 }
 
 int CollisionEvaluation(Cage_t* s, GridSubstrat* gridSubstrat_t)
@@ -1312,7 +1388,7 @@ int CollisionEvaluation(Cage_t* s, GridSubstrat* gridSubstrat_t)
     return collision;
 }
 
-void SpringPathComputing(InterconnectionTreeStore tree_store,Cage_t* s, GridSubstrat* gridSubstrat_t,int numpath, time_t start,Options_t options)
+void SpringPathComputing(InterconnectionTreeStore tree_store,Cage_t* s, GridSubstrat* gridSubstrat_t,int numpath, time_t start,Grid_t* grid, MinHeap_t* heap , Options_t options)
 {
     //printf("In Spring Path \n");
     // Value Initialization
@@ -1352,8 +1428,10 @@ void SpringPathComputing(InterconnectionTreeStore tree_store,Cage_t* s, GridSubs
             id_source = tree_store.items[i].edges[j*2];
 
             id_target = tree_store.items[i].edges[j*2 + 1];
-            nb_atom_to_place = dist(coords(atom(s_try,id_source)),coords(atom(s_try,id_target)))/dist_Alkashi;
-
+            if(grid != NULL && heap != NULL)
+                nb_atom_to_place = aStarDistance(coords(atom(s,id_source)), coords(atom(s,id_target)), grid, heap)/1.22;
+            else
+                nb_atom_to_place = dist(coords(atom(s,id_source)), coords(atom(s,id_target)))/1.22;
             Add_Path(s_try,id_source,id_target,nb_atom_to_place);
         }
         if (options.verbose)
@@ -1379,12 +1457,13 @@ void SpringPathComputing(InterconnectionTreeStore tree_store,Cage_t* s, GridSubs
         }
         if (options.verbose)
             printf("Fruchterman %d \n",i);
+
         Fruchterman_Reingold(s_try,param->k1_a,param->k2_a,param->k_r,gridSubstrat_t,STEP_GRID,mat_RMSD,edge_mat,options);
         if (options.verbose)
             printf("RMSD_dist : %f \nRMSD_angle : %f\n",mat_RMSD[0], mat_RMSD[1]);
-
         if (options.verbose)
             printf("Creating path \n");
+
         SpringPath_t* sp = CreateSPath(Path_list->size, cageCopy(s_try), mat_RMSD[0], mat_RMSD[1]);
         if (options.verbose)
             printf("AddingPath \n");
