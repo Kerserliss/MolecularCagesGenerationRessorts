@@ -714,6 +714,10 @@ void cageWriteMol2_Spring(char *output, SpringPath_t* sp,time_t start, int colli
   int ret, i, j, l;
   Cage_t* s = sp->cage;
   int *index = malloc(size(s) * sizeof(int));
+  if (sp->RMSD_dist > 20) {
+   printf("Overflow problem, RMSD : %f\n", sp->RMSD_dist);
+   exit(EXIT_FAILURE);
+   }
   if (options.verbose)
       printf("Allocation value \n");
   filestream = fopen(output, "w");
