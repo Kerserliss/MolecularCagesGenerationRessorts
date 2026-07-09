@@ -9,7 +9,7 @@ OBJDIR=obj
 SRCDIR=src
 BINDIR=bin
 
-CC=gcc -fopenmp -O0
+CC=gcc -fopenmp -O3
 EXEC=cleanCompile dir $(BINDIR)/$(TARGET)
 SRC:=$(wildcard $(SRCDIR)/*.c)
 OBJ:=$(SRC:$(SRCDIR)/%.c=$(OBJDIR)/%.o)

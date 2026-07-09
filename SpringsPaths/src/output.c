@@ -764,7 +764,7 @@ void cageWriteMol2_Spring(char *output, SpringPath_t* sp,time_t start, int colli
         ret = fprintf(filestream, " %3d O", j);
       else if (flag(atom(s, i)) == NITROGEN_F)
         ret = fprintf(filestream, " %3d N", j);
-      else if (flag(atom(s, i)) == CARBON_F)
+      else if (flag(atom(s, i)) == CARBON_F ||flag(atom(s, i)) == SPRING_PATH_F )
         ret = fprintf(filestream, " %3d C", j);
       else if (flag(atom(s, i)) == HYDROGEN_F)
         ret = fprintf(filestream, " %3d H", j);
@@ -793,7 +793,7 @@ void cageWriteMol2_Spring(char *output, SpringPath_t* sp,time_t start, int colli
         ret = fprintf(filestream, "   O\n");
       else if (flag(atom(s, i)) == NITROGEN_F)
         ret = fprintf(filestream, "   N\n");
-      else if (flag(atom(s, i)) == CARBON_F)
+      else if (flag(atom(s, i)) == CARBON_F || flag(atom(s, i)) == SPRING_PATH_F)
         ret = fprintf(filestream, "   C\n");
       else if (flag(atom(s, i)) == HYDROGEN_F)
         ret = fprintf(filestream, "   H\n");

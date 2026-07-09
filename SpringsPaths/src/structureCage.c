@@ -559,9 +559,7 @@ Cage_t *cageImport(char *inputname, char *mocNum, Options_t options) {
     } else if (strcmp(atom_name, "P") == 0) {
       flag((atom(import_cage, index - 1))) = LINKABLE_F;
     } else if (strcmp(atom_name, "C") == 0) {
-      flag((atom(import_cage, index - 1))) = CARBON_F;
-    } else if (strcmp(atom_name, "O") == 0) {
-      flag((atom(import_cage, index - 1))) = SPRING_PATH_F;
+      flag((atom(import_cage, index - 1))) =SPRING_PATH_F;
     } else {
       printf("unknown atom type: %s\n", atom_name);
       exit(EXIT_FAILURE);

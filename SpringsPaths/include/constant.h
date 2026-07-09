@@ -285,7 +285,7 @@
 /** @def SPRING_PATH_F
  *  @brief Atom involved in spring path, atom allow to move during fruchterman-Reingold.
  */
-#define SPRING_PATH_F 4
+#define SPRING_PATH_F 8
 
 /***********************************************************************/
 
