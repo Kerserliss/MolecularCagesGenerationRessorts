@@ -1559,7 +1559,7 @@ void SpringPathComputing(InterconnectionTreeStore tree_store,Cage_t* s, GridSubs
             }
             SA_Parameters(s_try, gridSubstrat_t, param,options,edge_mat);
         }
-        if (options.verbose)1.22
+        if (options.verbose)
             printf("Fruchterman %d \n",i);
 
 

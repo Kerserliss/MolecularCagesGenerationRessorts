@@ -187,17 +187,18 @@ double RMSDAnglePath(Cage_t* s, int source, int target)
     int current = source;
     int id_prev = -1;
     double angle_current = 0;
+    int neigbord1, neigbord2;
 
     while(current!=target)
     {
         for (int i = 0; i<cageNbNeighborhood(atom(s,current)); i++)
         {
-            int neigbord1 = elts(atom(s,current)->neighborhood,i);
+            neigbord1 = elts(atom(s,current)->neighborhood,i);
             if(neigbord1!=id_prev)
             {
                 for(int j = 0;j<cageNbNeighborhood(atom(s,neigbord1));j++)
                 {
-                    int neigbord2 = elts(atom(s,neigbord2)->neighborhood,j);
+                    neigbord2 = elts(atom(s,neigbord1)->neighborhood,j);
                     if(neigbord2!= current)
                     {
                         angle_current = angle(coords(atom(s,neigbord1)),coords(atom(s,current)),coords(atom(s,neigbord2)));
@@ -316,11 +317,6 @@ void FruchtermanReingold(Cage_t* s, double k_attraction1,double k_attraction2, d
 
 	while(i<ITERATIONS && temperature >0.0001)
 	{
-	    if(i%10000 == 0 && options.verbose)
-	    {
-			printf("Iterations : %d \n",i);
-			printf("Temperature : %f\n",temperature);
-		}
 		// We initialize our array of vector at 0.
 		for (int j = 0; j<s->size; j++)
 		{
