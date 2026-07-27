@@ -5,7 +5,8 @@
 /src/main
 obj/*.o
 /PathsGeneration/obj
-/demos
+/demos/demos_onePath
+/demos/demos_test
 /demos_results
 /ResultPlot
 /demos_results_astar
