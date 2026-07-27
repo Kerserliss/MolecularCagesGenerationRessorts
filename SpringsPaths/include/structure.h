@@ -330,6 +330,13 @@ typedef struct {
 /**************************************/
 /* SPRINGS PATHS **********************/
 /**************************************/
+
+/**
+ * @struct SpringPath_t
+ * @brief Molecular cage build with the Spring Method.
+ *
+ * This structure contains the molecular cage, id of it, and the associated RMSD.
+ */
 typedef struct {
     int id;
     Cage_t* cage;
@@ -337,10 +344,14 @@ typedef struct {
     double RMSD_angle;
 } SpringPath_t;
 
+/**
+ * @struct List_p
+ * @brief List of SpringPath_t Object
+ */
 typedef struct {
-    SpringPath_t** Path_array;
-    int size;
-    int allocated_size;
+    SpringPath_t** Path_array;  /**<Array containing SpringPath_t Object. */
+    int size;                   /**<Number of element in the list. */
+    int allocated_size;         /**<Allocated mzmory */
 } List_p;
 
 
@@ -942,33 +953,112 @@ void printMinHeap(MinHeap_t *heap);
  */
 void freeMinHeap(MinHeap_t *heap);
 
+/**
+ * @brief Initializes a new SpringPath_t object with value.
+ *
+ * This function initializes a new list by setting its elements the different variable and return a pointer to the SP object.
+ *
+ * @param id ID for the object.
+ * @param s Pointer to the corresponding molecular cage.
+ * @param RMSD_dist RMSD_dist correspondig.
+ * @param RMSD_angle RMSD_angle correspondig.
+ */
 SpringPath_t* CreateSPath(int id,Cage_t* s, double RMSD_dist, double RMSD_angle);
 
+/**
+ * @brief Initializes a new list.
+ *
+ * This function initializes a new SpringPath_t object by setting its elements to 0 or -1 and allocated memor for the cage.
+ *
+ * @param sp Pointer to the SP to initialize.
+ */
 void InitSPath(SpringPath_t* sp);
 
+/**
+ * @brief Free a SpringPath_t Object/
+ */
 void DestroySPath(SpringPath_t* sp);
 
+/**
+ * @brief Initializes a new list.
+ *
+ * This function initializes a new list by setting its elements to NULL and size to 0.
+ *
+ * @param lp Pointer to the list to initialize.
+ */
 void lstpInit(List_p* lp);
 
+/**
+ * @brief Create a new list.
+ *
+ * This function allocate memory, call lstpInit and return a new list_p
+ */
 List_p* lstpCreate();
 
+/**
+ * @brief Add an element to the list.
+ *
+ * Take a SpringPath_t object and add it to the list. If size is superitor to our allocated size, we allocate memory.
+ *
+ * @param lp List where the element will be add.
+ * @param sp SpringPath to add.
+ */
 void lstpAddElement(List_p* lp, SpringPath_t* sp);
 
+/**
+ * @brief Remove an element to the list.
+ *
+ * Take an id of a SpringPath_t object and remove from the the list. If the id is not in the list, nothing happens.
+ *
+ * @param lp List where the element will be remove.
+ * @param id Id to search.
+ */
 void lstpRemoveElement(List_p* lp, int id);
 
+/**
+ * @brief Get an element from list with id.
+ *
+ * Take an id of a SpringPath_t object and fetch it from the the list. If the id is not in the list, return NULL.
+ *
+ * @param lp List where the id will be search.
+ * @param id Id to search.
+ */
 SpringPath_t* lstpGetPath(List_p* lp, int id);
 
+/**
+ * @brief Get an element from list with minimun RMSD distance.
+ *
+ * @param lp List where the element will be search.
+ */
 SpringPath_t* lstpMinRMSDDist(List_p* lp);
 
+/**
+ * @brief Get an element from list with minimun RMSD distance.
+ *
+ * @param lp List where the element will be search.
+ */
 SpringPath_t* lstpMinRMSDAngle(List_p* lp);
 
+/**
+ * @brief Adds allocated memory to the list.
+ *
+ * This function adds allocated memory to the list to accommodate new elements.
+ *
+ * @param l Pointer to the list to which memory is added.
+ */
 void lstpAddAlloc(List_p* lp);
 
+
+/**
+ * @struct Parameters
+ * @brief Contains all parameters for the FruchtmarReingold Algorithm and the Angle RMSD from the run.
+ */
+
 typedef struct {
-    double k_r;
-    double k1_a;
-    double k2_a;
-    double RMSD_angle;
+    double k_r;         /**<Repulsion Force */
+    double k1_a;        /**<Attractice force for immediate neighbord */
+    double k2_a;        /**<Attractice force for atom at distance 2 */
+    double RMSD_angle;  /**<Angle RMSD */
 } Parameters;
 
 

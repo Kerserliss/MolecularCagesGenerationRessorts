@@ -7,3 +7,8 @@ obj/*.o
 /PathsGeneration/obj
 /demos
 /demos_results
+/ResultPlot
+/demos_results_astar
+/demos_results_euclidien
+/Demos_temp10
+/__pycache__

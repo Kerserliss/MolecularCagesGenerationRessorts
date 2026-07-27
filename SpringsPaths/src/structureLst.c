@@ -438,6 +438,13 @@ void lstsPrint(List_s *list) {
 
 // List_p
 
+/**
+ * @brief Initializes a new list.
+ *
+ * This function initializes a new list by setting its elements to NULL and size to 0.
+ *
+ * @param lp Pointer to the list to initialize.
+ */
 void lstpInit(List_p* lp)
 {
     lp->Path_array = NULL;
@@ -445,6 +452,11 @@ void lstpInit(List_p* lp)
     lp->allocated_size = 0;
 }
 
+/**
+ * @brief Create a new list.
+ *
+ * This function allocate memory, call lstpInit and return a new list_p
+ */
 List_p* lstpCreate()
 {
     List_p* lp = malloc(sizeof(List_p));
@@ -452,6 +464,14 @@ List_p* lstpCreate()
     return lp;
 }
 
+/**
+ * @brief Add an element to the list.
+ *
+ * Take a SpringPath_t object and add it to the list. If size is superitor to our allocated size, we allocate memory.
+ *
+ * @param lp List where the element will be add.
+ * @param sp SpringPath to add.
+ */
 void lstpAddElement(List_p* lp, SpringPath_t* sp)
 {
     if(lp->size + 1 > lp->allocated_size)
@@ -460,6 +480,14 @@ void lstpAddElement(List_p* lp, SpringPath_t* sp)
     lp->size += 1;
 }
 
+/**
+ * @brief Remove an element to the list.
+ *
+ * Take an id of a SpringPath_t object and remove from the the list. If the id is not in the list, nothing happens.
+ *
+ * @param lp List where the element will be remove.
+ * @param id Id to search.
+ */
 void lstpRemoveElement(List_p* lp, int id)
 {
     for(int i = 0;i<lp->size;i++)
@@ -478,6 +506,14 @@ void lstpRemoveElement(List_p* lp, int id)
     }
 }
 
+/**
+ * @brief Get an element from list with id.
+ *
+ * Take an id of a SpringPath_t object and fetch it from the the list. If the id is not in the list, return NULL.
+ *
+ * @param lp List where the id will be search.
+ * @param id Id to search.
+ */
 SpringPath_t* lstpGetPath(List_p* lp, int id)
 {
     for(int i = 0;i<lp->size;i++)
@@ -489,6 +525,12 @@ SpringPath_t* lstpGetPath(List_p* lp, int id)
     }
     return NULL;
 }
+
+/**
+ * @brief Get an element from list with minimun RMSD distance.
+ *
+ * @param lp List where the element will be search.
+ */
 SpringPath_t* lstpMinRMSDDist(List_p* lp)
 {
     double min = DBL_MAX;
@@ -504,6 +546,11 @@ SpringPath_t* lstpMinRMSDDist(List_p* lp)
     return lp->Path_array[index];
 }
 
+/**
+ * @brief Get an element from list with minimun RMSD distance.
+ *
+ * @param lp List where the element will be search.
+ */
 SpringPath_t* lstpMinRMSDAngle(List_p* lp)
 {
     double min = DBL_MAX;
@@ -519,6 +566,13 @@ SpringPath_t* lstpMinRMSDAngle(List_p* lp)
     return lp->Path_array[index];
 }
 
+/**
+ * @brief Adds allocated memory to the list.
+ *
+ * This function adds allocated memory to the list to accommodate new elements.
+ *
+ * @param l Pointer to the list to which memory is added.
+ */
 void lstpAddAlloc(List_p* lp)
 {
     lp->Path_array = realloc(lp->Path_array,(lp->allocated_size + REALLOCSIZE)*sizeof(SpringPath_t*));

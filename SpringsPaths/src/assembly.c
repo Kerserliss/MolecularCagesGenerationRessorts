@@ -6,7 +6,7 @@
 #include "output.h"
 #include "thetaSelection.h"
 #include "util.h"
-#include "Fruchterman_Reingold.h"
+#include "FruchtermanReingold.h"
 
 #include <stdio.h>
 #include <float.h>
@@ -1220,6 +1220,10 @@ void generatePaths(Cage_t *cage, int *interTree, Paths_t *paths, GridSubstrat *g
   }
 }
 
+/**
+ * @brief Compare the new parameter with the best ones we saved. best_param is in theory sorted.
+ * @return 1 if the new parameter was better, else 0.
+ */
 int compareParameters(Parameters** best_param,int size,Parameters* param)
 {
     for(int i =0; i<size;i++)
@@ -1239,6 +1243,10 @@ int compareParameters(Parameters** best_param,int size,Parameters* param)
     return 0;
 }
 
+/**
+ * @brief Initialize a parameter Object.
+ * @return The initialize parameter.
+ */
 Parameters* initParam()
 {
     Parameters* param = malloc(sizeof(Parameters));
@@ -1248,6 +1256,11 @@ Parameters* initParam()
     param->RMSD_angle= DBL_MAX;
     return param;
 }
+
+/**
+ * @brief Initialize a parameter Object with given values
+ * @return @return The initialize parameter.
+ */
 Parameters* initParamValue(double k1_a,double k2_a,double k_r,double RMSD_angle)
 {
     Parameters* param = malloc(sizeof(Parameters));
@@ -1258,6 +1271,10 @@ Parameters* initParamValue(double k1_a,double k2_a,double k_r,double RMSD_angle)
     return param;
 }
 
+/**
+ * @brief Initialize a parameter array with a given size.
+ * @return The initialize parameter array.
+ */
 Parameters** initBestParameters(int size)
 {
     Parameters** best_param = malloc(sizeof(Parameters*)*size);
@@ -1268,6 +1285,9 @@ Parameters** initBestParameters(int size)
     return best_param;
 }
 
+/**
+ * @brief Delete a parameter array with a given size.
+ */
 void deleteBestParameters(Parameters** best_param,int size)
 {
     for(int i = 0; i<size;i++)
@@ -1276,10 +1296,36 @@ void deleteBestParameters(Parameters** best_param,int size)
     }
     free(best_param);
 }
-
+/**
+ * @brief Given a moleculer cage, it's find with Simulated Anneling the parameters forces who return the best angle RMSD.
+ *
+ * @param s Pointer to the molecular cage that will be used to find the best parameters. Contains atoms and their positions.
+ * @param gridSubstrat_t Pointer to the grid representation of the substrate. Used during Fruchertman_Reingold.
+ * @param param Struture to have start parameter and at the end stock and save the best param found.
+ * @param options For the verbose mode.
+ * @param edge_mat Matrice representing edge between immediate neighbord and distance 2 neighbord. Used during FruchtermanReingold.
+ *
+ * @details
+ * ### Key Steps Simulated Anneling :
+ * 1. **Initialization**: We generated the first cage and we save RMSD to initialize variable.
+ * 2. **Simulated anneling** ::
+ *    - Generate new forces parameters from the best one.
+ *    - Run FruchtermanReingold with these parameters.
+ *    - If the RMSD of this molecular cage is better, then we kept th parameters and we check if it's better than the one we keep in our array.
+ *          If it's case, then we put it in our array.
+ *    - If the RMSD is not better, we may be accept the parameter by probability.
+ *    - We drop the temperature and we start again until we are at our thresold.
+ * 3. **Ending **
+ *    - We return the best parameter from our SA.
+ *
+ * ### Notes:
+ *  Need to check if we are not in a overflow state.
+ * @see FruchtermanReingold.
+ */
 void SA_Parameters(Cage_t* s,GridSubstrat* gridSubstrat_t, Parameters* param, Options_t options, int** edge_mat)
 {
 
+    // Value Initialization.
     Parameters** best_param = initBestParameters(3);
 
     if(options.verbose)
@@ -1291,18 +1337,22 @@ void SA_Parameters(Cage_t* s,GridSubstrat* gridSubstrat_t, Parameters* param, Op
     if(options.verbose)
         printf("Cage copied \n");
 
+    // First run to have our first RMSD.
     double mat_RMSD_current[2];
-    Fruchterman_Reingold(s_work,param->k1_a,param->k2_a,param->k_r,gridSubstrat_t,STEP_GRID,mat_RMSD_current,edge_mat,options);
+    FruchtermanReingold(s_work,param->k1_a,param->k2_a,param->k_r,gridSubstrat_t,STEP_GRID,mat_RMSD_current,edge_mat,options);
     param->RMSD_angle = mat_RMSD_current[1];
     Parameters* inital_param = initParamValue(param->k1_a, param->k2_a, param->k_r, param->RMSD_angle);
 
+    // We add our first parameter.
     compareParameters(best_param,3, inital_param);
 
     if(options.verbose)
-        printf("Fruchterman_Reingold done \n");
+        printf("FruchtermanReingold done \n");
+
+    // We delete the cage, don't need it.
     cageDelete(s_work);
     double temp_k1a,temp_k2a,temp_kr;
-    double delta_RMSD;
+    double RMSD_delta;
     while( temp > 1)
     {
         if(options.verbose)
@@ -1310,26 +1360,22 @@ void SA_Parameters(Cage_t* s,GridSubstrat* gridSubstrat_t, Parameters* param, Op
             printf("Temperature : %f \n",temp);
             fflush(stdout);
         }
-        // Setting new param
-        // if(options.verbose)
-        // {
-        //     printf("Setting new parameters \n");
-        //     fflush(stdout);
-        // }
-        temp_k1a = param->k1_a + random_double(-1, 1);
-        temp_k2a = param->k2_a + random_double(-1, 1);
-        temp_kr = param->k_r + random_double(-1, 1);
+
+        // Generating new forces from the last one.
+        temp_k1a = param->k1_a + randomDouble(-1, 1);
+        temp_k2a = param->k2_a + randomDouble(-1, 1);
+        temp_kr = param->k_r + randomDouble(-1, 1);
         double mat_RMSD_new[2];
 
+        // Coping the cage with no work done ( Fruchterman Reigold ) on it.
         s_work = cageCopy(s);
-        // if(options.verbose)
-        // {
-        //     printf("Cage copied \n");
-        //     fflush(stdout);
-        // }
-        Fruchterman_Reingold(s_work,temp_k1a,temp_k2a,temp_kr,gridSubstrat_t,STEP_GRID,mat_RMSD_new,edge_mat,options);
 
-        delta_RMSD = mat_RMSD_new[1]-mat_RMSD_current[1];
+        // Fruchterman Reingold run.
+        FruchtermanReingold(s_work,temp_k1a,temp_k2a,temp_kr,gridSubstrat_t,STEP_GRID,mat_RMSD_new,edge_mat,options);
+
+
+        // Calculation of RMSD_delta.
+        RMSD_delta = mat_RMSD_new[1]-mat_RMSD_current[1];
         if (options.verbose)
         {
             printf("RMSD \n");
@@ -1337,16 +1383,23 @@ void SA_Parameters(Cage_t* s,GridSubstrat* gridSubstrat_t, Parameters* param, Op
             printf("\tCurrent : %f \n", mat_RMSD_current[1]);
             printf("\tNew : %f \n",mat_RMSD_new[1]);
         }
-        if(delta_RMSD<0)
+
+        // If our new RMSD it's better than the saved one, we accept it.
+        if(RMSD_delta<0)
         {
             if (options.verbose)
                 printf("Accepted by RMSD \n");
+
+            // We savec our new best parameter
             param->k1_a = temp_k1a;
             param->k2_a = temp_k2a;
             param->k_r = temp_kr;
 
+            // We update our RMSD.
             mat_RMSD_current[0] = mat_RMSD_new[0];
             mat_RMSD_current[1] = mat_RMSD_new[1];
+
+            // And we check if our Param is better than the one in our array.
             Parameters * new_param = initParamValue(temp_k1a, temp_k2a, temp_kr, mat_RMSD_current[1]);
             if(!(compareParameters(best_param,3, new_param)))
             {
@@ -1354,27 +1407,41 @@ void SA_Parameters(Cage_t* s,GridSubstrat* gridSubstrat_t, Parameters* param, Op
             }
 
         }
-        else if  (random_double(0,1)<exp(-delta_RMSD/temp))
+
+        // If note, we throw a dice and see if we accept it by probability.
+        else if  (randomDouble(0,1)<exp(-RMSD_delta/temp))
         {
+            // Update Parameter.
             if (options.verbose)
-            printf("Accepted by probability \n");
+                printf("Accepted by probability \n");
             param->k1_a = temp_k1a;
             param->k2_a = temp_k2a;
             param->k_r = temp_kr;
+
+            // Update RMSD
             mat_RMSD_current[0] = mat_RMSD_new[0];
             mat_RMSD_current[1] = mat_RMSD_new[1];
         }
 
+        // Cooling our temp.
         temp = temp * COOLING_RATE_SA;
         //printf("Temp : %f \n",temp);
         cageDelete(s_work);
     }
+
+    // Return our best one
     param->k1_a = best_param[0]->k1_a;
     param->k2_a = best_param[0]->k2_a;
     param->k_r = best_param[0]->k_r;
+
+    // Free our array.
     deleteBestParameters(best_param, 3);
 }
 
+/**
+ * @brief Calcul how many collision our cage have with the substrat.
+ * @return The number of collision.
+ */
 int CollisionEvaluation(Cage_t* s, GridSubstrat* gridSubstrat_t)
 {
     int collision  = 0;
@@ -1388,6 +1455,36 @@ int CollisionEvaluation(Cage_t* s, GridSubstrat* gridSubstrat_t)
     return collision;
 }
 
+
+/**
+ * @brief Given a moleculer cage, it's find with Simulated Anneling the parameters forces who return the best angle RMSD.
+ *
+ * @param s Pointer to the molecular cage that will be used to find the best parameters. Contains atoms and their positions.
+ * @param gridSubstrat_t Pointer to the grid representation of the substrate. Used during Fruchertman_Reingold.
+ * @param param Struture to have start parameter and at the end stock and save the best param found.
+ * @param options For the verbose mode.
+ * @param edge_mat Matrice representing edge between immediate neighbord and distance 2 neighbord. Used during FruchtermanReingold.
+ *
+ * @details
+ * ### Key Steps Simulated Anneling :
+ * 1. **Initialization**: We generated the first gave and we save RMSD to initialize variable.
+ * 2. **Simulated anneling** ::
+ *    - Generate new forces parameters from the best one.
+ *    - Run FruchtermanReingold with these parameters.
+ *    - If the RMSD of this molecular cage is better, then we kept th parameters and we check if it's better than the one we keep in our array.
+ *          If it's case, then we put it in our array.
+ *    - If the RMSD is not better, we may be accept the parameter by probability.
+ *    - We drop the temperature and we start again until we are at our thresold.
+ * 3. **Ending **
+ *    - We return the best parameter from our SA.
+ *
+ * ### Notes:
+ *  Need to check if we are not in a overflow state.
+ * @see FruchtermanReingold.
+ * @see Al_kashu_theorem
+ * @see AddPath
+ * @see SA_Parameters
+ */
 void SpringPathComputing(InterconnectionTreeStore tree_store,Cage_t* s, GridSubstrat* gridSubstrat_t,int numpath, time_t start,Grid_t* grid, MinHeap_t* heap , Options_t options)
 {
     //printf("In Spring Path \n");
@@ -1399,24 +1496,20 @@ void SpringPathComputing(InterconnectionTreeStore tree_store,Cage_t* s, GridSubs
     double mat_RMSD[2];
     List_p* Path_list = lstpCreate();
     Cage_t* s_try;
-    double dist_Alkashi = Al_kashi_therorem(1.5,1.5,1.9111355309338)/2;
+    double dist_Alkashi = AlKashiTheorem(1.5,1.5,1.9111355309338)/2;
     int id_source, id_target, nb_atom_to_place;
 
-
-
-    // Computing Path for each
+    // Computing Path for each tree.
     for (int i = 0; i<options.maxResults &&i<tree_store.count; i++)
     {
-        if (options.verbose)
-            printf("Trying to coping cape \n");
         s_try = cageCopy(s);
-        if (options.verbose)
-            printf("Cage copied \n");
         if (options.verbose)
         {
             printf("Adding Path %d\n",i);
             printf("Numpath %d \n",numpath);
+            printf("Max path : %ld \n",tree_store.count);
         }
+        // Adding edge and atom between our atom source and target.
         for(int j = 0; j<numpath; j++)
         {
             if (options.verbose)
@@ -1428,25 +1521,36 @@ void SpringPathComputing(InterconnectionTreeStore tree_store,Cage_t* s, GridSubs
             id_source = tree_store.items[i].edges[j*2];
 
             id_target = tree_store.items[i].edges[j*2 + 1];
+
+            // If we are using A*distance
             if(grid != NULL && heap != NULL)
-                nb_atom_to_place = aStarDistance(coords(atom(s,id_source)), coords(atom(s,id_target)), grid, heap)/1.22;
+                nb_atom_to_place = aStarDistance(coords(atom(s,id_source)), coords(atom(s,id_target)), grid, heap)/dist_Alkashi;
+            // Or euclidian distance.
             else
-                nb_atom_to_place = dist(coords(atom(s,id_source)), coords(atom(s,id_target)))/1.22;
-            Add_Path(s_try,id_source,id_target,nb_atom_to_place);
+                nb_atom_to_place = dist(coords(atom(s,id_source)), coords(atom(s,id_target)))/dist_Alkashi;
+
+            // We adding our path.
+            AddPath(s_try,id_source,id_target,nb_atom_to_place);
         }
         if (options.verbose)
         {
             printf("Computing edge matrix\n");
             printf("Size : %d \n",s_try->size);
         }
+
+        // We initilize our edge matrix used in SA or Fruchterman Reingold.
         int** edge_mat = (int**)malloc(s_try->size*sizeof(int*));
     	for(int i = 0; i<s_try->size;i++)
     	{
     		edge_mat[i] = (int*)malloc(s_try->size*sizeof(int));
     	}
+
+        // And we compute it.
         ComputeEdgeMat(s_try, s_try->size, s_try->size, edge_mat);
         if (options.verbose)
             printf("Done edge matrix\n");
+
+        // If it's our first time, Simulated Anneling
         if (i == 0)
         {
             if (options.verbose)
@@ -1455,15 +1559,19 @@ void SpringPathComputing(InterconnectionTreeStore tree_store,Cage_t* s, GridSubs
             }
             SA_Parameters(s_try, gridSubstrat_t, param,options,edge_mat);
         }
-        if (options.verbose)
+        if (options.verbose)1.22
             printf("Fruchterman %d \n",i);
 
-        Fruchterman_Reingold(s_try,param->k1_a,param->k2_a,param->k_r,gridSubstrat_t,STEP_GRID,mat_RMSD,edge_mat,options);
+
+        // We run FruchtermanReingold.
+        FruchtermanReingold(s_try,param->k1_a,param->k2_a,param->k_r,gridSubstrat_t,STEP_GRID,mat_RMSD,edge_mat,options);
         if (options.verbose)
             printf("RMSD_dist : %f \nRMSD_angle : %f\n",mat_RMSD[0], mat_RMSD[1]);
         if (options.verbose)
             printf("Creating path \n");
 
+
+        // We add our moc to our array.
         SpringPath_t* sp = CreateSPath(Path_list->size, cageCopy(s_try), mat_RMSD[0], mat_RMSD[1]);
         if (options.verbose)
             printf("AddingPath \n");
@@ -1473,14 +1581,15 @@ void SpringPathComputing(InterconnectionTreeStore tree_store,Cage_t* s, GridSubs
     if (options.verbose)
         printf("Searching best path\n");
     // Finding the best moc.
-    SpringPath_t* sp_dist = lstpMinRMSDDist(Path_list);
+    //SpringPath_t* sp_dist = lstpMinRMSDDist(Path_list);
     SpringPath_t* sp_angle = lstpMinRMSDAngle(Path_list);
 
-    //Try to have the best moc.
+    //Computing Collision
     int collision = CollisionEvaluation(sp_angle->cage, gridSubstrat_t);
 
     if (options.verbose)
         printf("Writing best path angle\n");
+    // Wrtting it.
     cageWriteMol2_Spring(options.output, sp_angle,start,collision, options);
     // TODO remove unless needed
     // if(sp_dist->id != sp_angle->id)

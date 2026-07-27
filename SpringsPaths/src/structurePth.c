@@ -415,6 +415,16 @@ void pthPrintOrWriteAll(Paths_t *paths, const char *filename) {
 #undef PRINT
 }
 
+/**
+ * @brief Initializes a new SpringPath_t object with value.
+ *
+ * This function initializes a new list by setting its elements the different variable and return a pointer to the SP object.
+ *
+ * @param id ID for the object.
+ * @param s Pointer to the corresponding molecular cage.
+ * @param RMSD_dist RMSD_dist correspondig.
+ * @param RMSD_angle RMSD_angle correspondig.
+ */
 SpringPath_t* CreateSPath(int id,Cage_t* s, double RMSD_dist, double RMSD_angle)
 {
     SpringPath_t* sp = malloc(sizeof(SpringPath_t));
@@ -427,6 +437,13 @@ SpringPath_t* CreateSPath(int id,Cage_t* s, double RMSD_dist, double RMSD_angle)
     return sp;
 }
 
+/**
+ * @brief Initializes a new list.
+ *
+ * This function initializes a new SpringPath_t object by setting its elements to 0 or -1 and allocated memor for the cage.
+ *
+ * @param sp Pointer to the SP to initialize.
+ */
 void InitSPath(SpringPath_t* sp)
 {
     sp->id = -1;
@@ -435,6 +452,9 @@ void InitSPath(SpringPath_t* sp)
     sp->RMSD_angle = 0;
 }
 
+/**
+ * @brief Free a SpringPath_t Object/
+ */
 void DestroySPath(SpringPath_t* sp)
 {
     cageDelete(sp->cage);

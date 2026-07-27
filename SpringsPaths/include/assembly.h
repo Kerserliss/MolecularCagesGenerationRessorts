@@ -86,8 +86,63 @@ int effective_growth_limit(Paths_t *paths, int path_index, Options_t options);
 void generatePaths(Cage_t *cage, int *interTree, Paths_t *paths, GridSubstrat *grid_sub, double ***substrat_t,
                    Options_t options, int *list_banned_edges, int *size_list_banned_edges);
 
+/**
+ * @brief Given a moleculer cage, it's find with Simulated Anneling the parameters forces who return the best angle RMSD.
+ *
+ * @param s Pointer to the molecular cage that will be used to find the best parameters. Contains atoms and their positions.
+ * @param gridSubstrat_t Pointer to the grid representation of the substrate. Used during Fruchertman_Reingold.
+ * @param param Struture to have start parameter and at the end stock and save the best param found.
+ * @param options For the verbose mode.
+ * @param edge_mat Matrice representing edge between immediate neighbord and distance 2 neighbord. Used during FruchtermanReingold.
+ *
+ * @details
+ * ### Key Steps Simulated Anneling :
+ * 1. **Initialization**: We generated the first cage and we save RMSD to initialize variable.
+ * 2. **Simulated anneling** ::
+ *    - Generate new forces parameters from the best one.
+ *    - Run FruchtermanReingold with these parameters.
+ *    - If the RMSD of this molecular cage is better, then we kept th parameters and we check if it's better than the one we keep in our array.
+ *          If it's case, then we put it in our array.
+ *    - If the RMSD is not better, we may be accept the parameter by probability.
+ *    - We drop the temperature and we start again until we are at our thresold.
+ * 3. **Ending **
+ *    - We return the best parameter from our SA.
+ *
+ * ### Notes:
+ *  Need to check if we are not in a overflow state.
+ * @see FruchtermanReingold.
+ */
 void SA_Parameters(Cage_t* s,GridSubstrat* gridSubstrat_t, Parameters* param, Options_t options, int** edge_mat);
 
+/**
+ * @brief Given a moleculer cage, it's find with Simulated Anneling the parameters forces who return the best angle RMSD.
+ *
+ * @param s Pointer to the molecular cage that will be used to find the best parameters. Contains atoms and their positions.
+ * @param gridSubstrat_t Pointer to the grid representation of the substrate. Used during Fruchertman_Reingold.
+ * @param param Struture to have start parameter and at the end stock and save the best param found.
+ * @param options For the verbose mode.
+ * @param edge_mat Matrice representing edge between immediate neighbord and distance 2 neighbord. Used during FruchtermanReingold.
+ *
+ * @details
+ * ### Key Steps Simulated Anneling :
+ * 1. **Initialization**: We generated the first gave and we save RMSD to initialize variable.
+ * 2. **Simulated anneling** ::
+ *    - Generate new forces parameters from the best one.
+ *    - Run FruchtermanReingold with these parameters.
+ *    - If the RMSD of this molecular cage is better, then we kept th parameters and we check if it's better than the one we keep in our array.
+ *          If it's case, then we put it in our array.
+ *    - If the RMSD is not better, we may be accept the parameter by probability.
+ *    - We drop the temperature and we start again until we are at our thresold.
+ * 3. **Ending **
+ *    - We return the best parameter from our SA.
+ *
+ * ### Notes:
+ *  Need to check if we are not in a overflow state.
+ * @see FruchtermanReingold.
+ * @see Al_kashu_theorem
+ * @see AddPath
+ * @see SA_Parameters
+ */
 void SpringPathComputing(InterconnectionTreeStore tree_store,Cage_t* s, GridSubstrat* gridSubstrat_t,int numpath, time_t start,Grid_t* grid, MinHeap_t* heap , Options_t options);
 
 #endif

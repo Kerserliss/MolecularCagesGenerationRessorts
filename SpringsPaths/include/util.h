@@ -242,9 +242,23 @@ char *getBasename(const char *in);
 #define LIKELY(x)   __builtin_expect(!!(x), 1) /**< Likely branch prediction hint. */
 #define UNLIKELY(x) __builtin_expect(!!(x), 0) /**< Unlikely branch prediction hint. */
 
-double Al_kashi_therorem(double a, double b,double angle);
+/**
+ * @brief Alkashi Theorem.
+ * Calculate the third side of a triangle .
+ *
+ * @param a Side A
+ * @param b Side B
+ * @param angle Angle between A and B.
+ */
+double AlKashiTheorem(double a, double b,double angle);
 
+/**
+ * @brief Calculate the lenght of a vector
+ */
 double vectorLength(Point_t p);
 
-double random_double(double min, double max);
+/**
+ * @brief Generate a random Double
+ */
+double randomDouble(double min, double max);
 #endif

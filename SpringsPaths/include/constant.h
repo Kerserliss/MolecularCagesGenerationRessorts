@@ -18,8 +18,8 @@
 #define USAGE_FMT                                                                                                      \
   "usage : [-i input directory] [-n moc number] [-o output file path] [-s sizemaxpath (default : %d)] [-r maxresults (default : %d)] [-b "   \
   "isBannedEdges (default : %d)] [-t oneCageByInterconnectionTree (default : %d)] [-p enablePathBoundary (default : %d)] [-l " \
-  "bestPathCutoff (default : %d)] [-g interTreeMode (default : %d, 0=on-the-fly, 1=store-sort)] " \
-  "[-h]\n"
+  "bestPathCutoff (default : %d)] [-g interTreeMode (default : %d, 0=on-the-fly, 1=store-sort)] [-c springPath (default : %d) ]" \
+  " [-v verbose (default : %d)] [-d distance_type (default : %d)] [-h]\n"
 
 #define DEFLT_OUTPUTPATH "result.mol2"
 
@@ -61,10 +61,19 @@
  */
 #define DEFLT_SORT_INTERCONNECTION_TREES 0
 
+/** @def DEFLT_SPRING_PATH
+ *  @brief Default toggle for if we do the normal way or spring path way ( 0 = normal way ).
+ */
 #define DEFLT_SPRING_PATH 0
 
+/** @def DEFLT_VERBOSE
+ *  @brief Default toggle for the verbose mode (0 = disabled).
+ */
 #define DEFLT_VERBOSE 0
 
+/** @def DEFLT_DISTANCE
+ *  @brief Default toggle for the distance mode (0 = euclidian distance).
+ */
 #define DEFLT_DISTANCE 0
 
 // Structure
@@ -344,16 +353,31 @@
 #endif
 // Need to be smaller than DIST_GAP_CAGE, because we need to be able to access linkable atoms
 
-#define K_FRUCH_REIN 1.5
+// SPRING PATH CONSTANT
 
+/** @def ITERATIONS
+ *  @brief Number of iterations in the Fruchterman Reingold Algorythm.
+ */
 #define ITERATIONS 100000
 
+/** @def TEMPERATURE
+ *  @brief Temperature in the Fruchterman Reingold Algorythm.
+ */
 #define TEMPERATURE 500
 
+/** @def COOLING_RATE
+ *  @brief Cooling rate in the Fruchterman Reingold Algorythm.
+ */
 #define COOLING_RATE 0.9999
 
+/** @def TEMPERATURE_SA
+ *  @brief Temperature in the Simulated Anneling Algorythm.
+ */
 #define TEMPERATURE_SA 5
 
-#define COOLING_RATE_SA 0.99
+/** @def COOLING_RATE_SA
+ *  @briefCooling rate in the Simulated Anneling Algorythm.
+ */
+#define COOLING_RATE_SA 0.999
 
 #endif

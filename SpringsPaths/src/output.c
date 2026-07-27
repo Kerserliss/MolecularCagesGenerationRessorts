@@ -706,6 +706,31 @@ void cageWriteMol2(char *output, Cage_t *s, Paths_t *paths, int *interTree, int 
   fclose(filestream);
 }
 
+/**
+ * @brief Writes output files for a given cage structure .
+ *
+ * This function generates and writes a `.mol2` file for the given cage structure,
+ * including all atoms and edges. It's also write the number of collisions and the execution time fir the cage.
+ * It updates atom flags as needed for writing and restores them afterward.
+ *
+ * @param cage A pointer to the `Cage_t` structure representing the molecular system.
+ * @param options The `Options_t` structure containing input file name, output directory,
+ *                and the maximum number of results to be written.
+ * @param sp A pointer to the molecular cage generated with associated RMSD
+ * @param start Time of start of the exectution, from the main
+ * @param collision Number of time the moc collision with the substrat ( TODO : check how it's done )
+ *
+ * @details
+ * ### Function Workflow:
+ * 1. **Prepare Output Directory**:
+ *    - Creates a file based on the ouput file name.
+ *
+ * 2. **Write `.mol2` File**:
+ *    - Constructs the output file name using the input file name and result index.
+ *    - Write the differents variables ( time, collision ).
+ *    - Write atom and edge given their flag.
+ *
+ */
 void cageWriteMol2_Spring(char *output, SpringPath_t* sp,time_t start, int collision, Options_t options){
   time_t end = time(&end);
   if (options.verbose)
@@ -820,7 +845,8 @@ void cageWriteMol2_Spring(char *output, SpringPath_t* sp,time_t start, int colli
     exit(2);
     }
   }
-  printf("RMSD_dist : %f \nRMSD_Angle :%f\n",sp->RMSD_dist,sp->RMSD_angle);
+  if (options.verbose)
+      printf("RMSD_dist : %f \nRMSD_Angle :%f\n",sp->RMSD_dist,sp->RMSD_angle);
   free(index);
   fclose(filestream);
 }

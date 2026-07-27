@@ -23,7 +23,7 @@
 #include "structure.h"
 #include "substrat.h"
 #include "util.h"
-#include "Fruchterman_Reingold.h"
+#include "FruchtermanReingold.h"
 
 // for stats
 #include "assembly.h"
